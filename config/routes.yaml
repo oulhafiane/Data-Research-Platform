@@ -1,0 +1,5 @@
+api_auth:
+  path: /api/auth
+#index:
+#    path: /
+#    controller: App\Controller\DefaultController::index
