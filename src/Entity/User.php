@@ -6,6 +6,7 @@ use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Validator\Constraints as Assert;
 use JMS\Serializer\Annotation as Serializer;
+use Ramsey\Uuid\Uuid;
 
 /**
  * @ORM\HasLifecycleCallbacks
@@ -27,7 +28,15 @@ abstract class User implements UserInterface
     private $id;
 
     /**
+     * @ORM\Column(type="uuid", unique=true)
+     * @Serializer\Type("string")
+     * @Serializer\Groups({"infos", "list-comments"})
+     */
+    private $uuid;
+
+    /**
      * @ORM\Column(type="string", length=180, unique=true)
+     * @Assert\NotBlank(groups={"new-user"})
      * @Assert\Email(groups={"new-user"})
      * @Serializer\Groups({"new-user", "infos"})
      */
@@ -47,42 +56,115 @@ abstract class User implements UserInterface
     private $password;
 
     /**
-	 * @Assert\NotBlank(groups={"new-user"})
-	 * @Assert\Length(min=6, max=4096, groups={"new-user"})
-	 * @Assert\NotCompromisedPassword(groups={"new-user"})
-	 * @Serializer\SerializedName("password")
-	 * @Serializer\Type("string")
-	 * @Serializer\Groups({"new-user"})
-	 */
-	protected $plainPassword;
+     * @Assert\NotBlank(groups={"new-user"})
+     * @Assert\Length(min=6, max=4096, groups={"new-user"})
+     * @Assert\NotCompromisedPassword(groups={"new-user"})
+     * @Serializer\SerializedName("password")
+     * @Serializer\Type("string")
+     * @Serializer\Groups({"new-user"})
+     */
+    protected $plainPassword;
 
 
     /**
      * @ORM\Column(type="string", length=50)
      * @Assert\NotBlank(groups={"new-user"})
      * @Serializer\SerializedName("firstName")
-	 * @Serializer\Groups({"new-user", "infos"})
+     * @Serializer\Groups({"new-user", "infos", "update-user", "list-comments"})
      */
     private $firstName;
 
     /**
      * @ORM\Column(type="string", length=50)
      * @Assert\NotBlank(groups={"new-user"})
-	 * @Serializer\SerializedName("lastName")
-     * @Serializer\Groups({"new-user", "list-offers", "infos"})
+     * @Serializer\SerializedName("lastName")
+     * @Serializer\Groups({"new-user", "infos", "update-user", "list-comments"})
      */
     private $lastName;
 
     /**
      * @ORM\Column(type="string", length=20)
      * @Assert\NotBlank(groups={"new-user"})
-	 * @Serializer\Groups({"new-user"})
+     * @Serializer\Groups({"new-user", "infos", "update-user"})
      */
     private $phone;
+
+    /**
+     * @ORM\OneToOne(targetEntity="App\Entity\Photo", cascade={"persist", "remove"})
+     * @ORM\JoinColumn(nullable=true)
+     * @Serializer\Groups({"update-user", "infos"})
+     */
+    private $Photo;
+
+    /**
+     * @ORM\Column(type="string", length=255, nullable=true)
+     * @Serializer\Groups({"update-user", "infos"})
+     */
+    private $address;
+
+    /**
+     * @ORM\Column(type="string", length=50, nullable=true)
+     * @Serializer\Groups({"update-user", "infos"})
+     */
+    private $city;
+
+    /**
+     * @ORM\Column(type="string", length=50, nullable=true)
+     * @Serializer\Groups({"update-user", "infos"})
+     */
+    private $country;
+
+    /**
+     * @ORM\Column(type="string", length=5, nullable=true)
+     * @Serializer\SerializedName("postalCode")
+     * @Serializer\Groups({"update-user", "infos"})
+     */
+    private $postalCode;
+
+    /**
+     * @ORM\Column(type="string", length=50, nullable=true)
+     * @Serializer\Groups({"update-user", "infos"})
+     */
+    private $organization;
+
+    /**
+     * @ORM\Column(type="text", nullable=true)
+     * @Serializer\Groups({"update-user", "infos"})
+     */
+    private $bio;
+
+    /**
+     * @ORM\Column(type="datetime")
+     */
+    protected $subscriptionDate;
+
+    /**
+     * @ORM\Column(type="boolean")
+     */
+    protected $isActive;
+
+    /**
+     * @ORM\PrePersist
+     */
+    public function onPrePersist()
+    {
+        $this->uuid = Uuid::uuid4()->toString();
+        if ($this instanceof Searcher)
+            $this->roles[] = 'ROLE_SEARCHER';
+        else if ($this instanceof Reseller)
+            $this->roles[] = 'ROLE_CUSTOMER';
+        $this->subscriptionDate = new \DateTime();
+        $this->setIsActive(True);
+    }
 
     public function getId(): ?int
     {
         return $this->id;
+    }
+
+    public function getUuid(): Uuid
+    {
+        return $this->uuid;
     }
 
     public function getEmail(): ?string
@@ -195,6 +277,107 @@ abstract class User implements UserInterface
     public function setPhone(string $phone): self
     {
         $this->phone = $phone;
+
+        return $this;
+    }
+
+    public function getPhoto(): ?Photo
+    {
+        return $this->Photo;
+    }
+
+    public function setPhoto(?Photo $Photo): self
+    {
+        $this->Photo = $Photo;
+
+        return $this;
+    }
+
+    public function getAddress(): ?string
+    {
+        return $this->address;
+    }
+
+    public function setAddress(?string $address): self
+    {
+        $this->address = $address;
+
+        return $this;
+    }
+
+    public function getCity(): ?string
+    {
+        return $this->city;
+    }
+
+    public function setCity(?string $city): self
+    {
+        $this->city = $city;
+
+        return $this;
+    }
+
+    public function getCountry(): ?string
+    {
+        return $this->country;
+    }
+
+    public function setCountry(?string $country): self
+    {
+        $this->country = $country;
+
+        return $this;
+    }
+
+    public function getPostalCode(): ?string
+    {
+        return $this->postalCode;
+    }
+
+    public function setPostalCode(?string $postalCode): self
+    {
+        $this->postalCode = $postalCode;
+
+        return $this;
+    }
+
+    public function getOrganization(): ?string
+    {
+        return $this->organization;
+    }
+
+    public function setOrganization(?string $organization): self
+    {
+        $this->organization = $organization;
+
+        return $this;
+    }
+
+    public function getBio(): ?string
+    {
+        return $this->bio;
+    }
+
+    public function setBio(?string $bio): self
+    {
+        $this->bio = $bio;
+
+        return $this;
+    }
+
+    public function getSubscriptionDate(): ?\DateTimeInterface
+    {
+        return $this->subscriptionDate;
+    }
+
+    public function getIsActive(): ?bool
+    {
+        return $this->isActive;
+    }
+
+    public function setIsActive(bool $isActive): self
+    {
+        $this->isActive = $isActive;
 
         return $this;
     }

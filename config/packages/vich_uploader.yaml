@@ -1,0 +1,8 @@
+vich_uploader:
+    db_driver: orm
+    storage: flysystem
+
+    mappings:
+        photo_user:
+            uri_prefix: /images/users/
+            upload_destination: photo_user_fs
