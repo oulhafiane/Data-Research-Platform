@@ -16,13 +16,13 @@ class SubCategory
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"new-problematic", "list-problematics"})
+     * @Serializer\Groups({"new-problematic", "list-problematics", "list-categories"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=100)
-     * @Serializer\Groups({"list-problematics"})
+     * @Serializer\Groups({"list-problematics", "list-categories"})
      */
     private $title;
 

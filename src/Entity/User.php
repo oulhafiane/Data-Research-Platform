@@ -30,7 +30,7 @@ abstract class User implements UserInterface
     /**
      * @ORM\Column(type="uuid", unique=true)
      * @Serializer\Type("string")
-     * @Serializer\Groups({"infos", "list-comments"})
+     * @Serializer\Groups({"infos", "list-comments", "list-problematics"})
      */
     private $uuid;
 
@@ -70,7 +70,7 @@ abstract class User implements UserInterface
      * @ORM\Column(type="string", length=50)
      * @Assert\NotBlank(groups={"new-user"})
      * @Serializer\SerializedName("firstName")
-     * @Serializer\Groups({"new-user", "infos", "update-user", "list-comments"})
+     * @Serializer\Groups({"new-user", "infos", "update-user", "list-comments", "list-problematics"})
      */
     private $firstName;
 
@@ -78,7 +78,7 @@ abstract class User implements UserInterface
      * @ORM\Column(type="string", length=50)
      * @Assert\NotBlank(groups={"new-user"})
      * @Serializer\SerializedName("lastName")
-     * @Serializer\Groups({"new-user", "infos", "update-user", "list-comments"})
+     * @Serializer\Groups({"new-user", "infos", "update-user", "list-comments", "list-problematics"})
      */
     private $lastName;
 
@@ -92,7 +92,7 @@ abstract class User implements UserInterface
     /**
      * @ORM\OneToOne(targetEntity="App\Entity\Photo", cascade={"persist", "remove"})
      * @ORM\JoinColumn(nullable=true)
-     * @Serializer\Groups({"update-user", "infos"})
+     * @Serializer\Groups({"update-user", "infos", "list-comments", "list-problematics"})
      */
     private $Photo;
 

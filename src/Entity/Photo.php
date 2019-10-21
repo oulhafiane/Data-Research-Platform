@@ -51,7 +51,6 @@ class Photo
 
 	/**
 	 * @ORM\Column(type="string", length=255)
-	 * @Serializer\Groups({"infos", "list-problematics"})
 	 * Assert\Url(groups={"new-photo"})
 	 */
 	private $link;
