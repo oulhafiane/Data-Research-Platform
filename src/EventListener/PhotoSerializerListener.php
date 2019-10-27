@@ -34,7 +34,7 @@ class PhotoSerializerListener implements EventSubscriberInterface
 		$newLink = $this->imagineCacheManager->getBrowserPath($link, 'photo_scale_down');
 		$thumbnail = $this->imagineCacheManager->getBrowserPath($link, 'photo_thumb');
 		$visitor = $event->getVisitor();
-		$visitor->visitProperty(new StaticPropertyMetadata('App\Entity\Photo', 'original', null), $newLink);
+		$visitor->visitProperty(new StaticPropertyMetadata('App\Entity\Photo', 'img', null), $newLink);
 		$visitor->visitProperty(new StaticPropertyMetadata('App\Entity\Photo', 'thumbnail', null), $thumbnail);
 	}
 }

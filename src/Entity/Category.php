@@ -16,13 +16,13 @@ class Category
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"list-categories"})
+     * @Serializer\Groups({"list-categories", "list-problematics"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=100)
-     * @Serializer\Groups({"list-categories"})
+     * @Serializer\Groups({"list-categories", "list-problematics"})
      */
     private $title;
 

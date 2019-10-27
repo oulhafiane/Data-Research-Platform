@@ -34,6 +34,8 @@ class SubCategory
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Category", inversedBy="subCategories")
      * @ORM\JoinColumn(nullable=false)
+     * @Serializer\SerializedName("parent_category")
+     * @Serializer\Groups({"list-problematics"})
      */
     private $category;
 

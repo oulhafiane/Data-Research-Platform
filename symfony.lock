@@ -99,6 +99,9 @@
     "doctrine/reflection": {
         "version": "v1.0.0"
     },
+    "gesdinet/jwt-refresh-token-bundle": {
+        "version": "v0.8.2"
+    },
     "guzzlehttp/guzzle": {
         "version": "6.3.3"
     },

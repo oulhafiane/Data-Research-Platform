@@ -3,8 +3,11 @@
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
+use JMS\Serializer\Annotation as Serializer;
 
 /**
+ * @ORM\HasLifecycleCallbacks()
  * @ORM\Entity(repositoryClass="App\Repository\VoteRepository")
  */
 class Vote
@@ -13,11 +16,15 @@ class Vote
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
+     * @Serializer\ReadOnly
+     * @Serializer\Groups({"list-votes"})
+     * @Assert\IsNull(groups={"new-vote"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="boolean")
+     * @Serializer\Groups({"new-vote", "old-vote", "list-votes"})
      */
     private $good;
 
@@ -36,6 +43,21 @@ class Vote
      * @ORM\ManyToOne(targetEntity="App\Entity\Comment", inversedBy="votes")
      */
     private $comment;
+
+    /**
+     * @ORM\Column(type="datetime")
+     * @Serializer\SerializedName("creationDate")
+     * @Serializer\Groups({"list-votes"})
+     */
+    private $creationDate;
+
+    /**
+     * @ORM\PrePersist
+     */
+    public function onPrePersist()
+    {
+        $this->creationDate = new \DateTime();
+    }
 
     public function getId(): ?int
     {
@@ -88,5 +110,10 @@ class Vote
         $this->comment = $comment;
 
         return $this;
+    }
+
+    public function getCreationDate(): ?\DateTimeInterface
+    {
+        return $this->creationDate;
     }
 }

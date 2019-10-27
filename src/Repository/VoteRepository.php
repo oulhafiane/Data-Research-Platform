@@ -47,4 +47,14 @@ class VoteRepository extends ServiceEntityRepository
         ;
     }
     */
+
+    public function getCountGood()
+    {
+        return $this->createQueryBuilder('v')
+            ->select('count(v.id)')
+            ->andWhere('v.good = 1')
+            ->getQuery()
+            ->getOneOrNullResult()
+        ;
+    }
 }

@@ -9,6 +9,7 @@ use Symfony\Component\Validator\Constraints AS Assert;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
+ * @ORM\HasLifecycleCallbacks()
  * @ORM\Entity(repositoryClass="App\Repository\ProblematicRepository")
  */
 class Problematic
@@ -56,6 +57,7 @@ class Problematic
 
     /**
      * @ORM\Column(type="text", nullable=true)
+     * @Serializer\SerializedName("possibleApplication")
      * @Serializer\Groups({"new-problematic", "list-problematics"})
      */
     private $possibleApplication;
@@ -106,6 +108,21 @@ class Problematic
      * @ORM\OneToMany(targetEntity="App\Entity\Vote", mappedBy="problematic")
      */
     private $votes;
+
+    /**
+     * @ORM\Column(type="datetime")
+     * @Serializer\SerializedName("creationDate")
+     * @Serializer\Groups({"list-problematics"})
+     */
+    private $creationDate;
+
+    /**
+     * @ORM\PrePersist
+     */
+    public function onPrePersist()
+    {
+        $this->creationDate = new \DateTime();
+    }
 
     public function __construct()
     {
@@ -318,5 +335,10 @@ class Problematic
         }
 
         return $this;
+    }
+
+    public function getCreationDate(): ?\DateTimeInterface
+    {
+        return $this->creationDate;
     }
 }
