@@ -11,7 +11,6 @@ use App\Helper\UploadedBase64EncodedFile;
 use App\Helper\Base64EncodedFile;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpKernel\Exception\HttpException;
-use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use Symfony\Component\Routing\Annotation\Route;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -188,6 +187,30 @@ class ProblematicController extends AbstractController
         return $response;
     }
 
+    private function deleteVote($vote)
+    {
+        $code = 401;
+        $message = "Unauthorized";
+
+        if (null !== $vote) {
+            try {
+                $this->em->remove($vote);
+                $this->em->flush();
+                $code = 202;
+                $message = "Vote deleted successfully";
+            } catch (\Exception $ex) {
+                throw new HttpException(500, $ex->getMessage());
+            }
+        } else {
+            throw new HttpException(404, "Vote not found.");
+        }
+
+        return new JsonResponse([
+            'code' => $code,
+            'message' => $message
+        ], $code);
+    }
+
     /**
      * @Route("/api/problematic/{id}/vote", name="new_vote", methods={"POST"}, requirements={"id"="\d+"})
      */
@@ -211,6 +234,9 @@ class ProblematicController extends AbstractController
         $vote = $this->em->getRepository(Vote::class)->findOneBy(["voter" => $this->cr->getCurrentUser($this), "problematic" => $problematic]);
 
         if (null !== $vote) {
+            if ($vote->getGood() === $data['good']) {
+                return $this->deleteVote($vote);
+            }
             $vote->setGood($data['good']);
             $group = 'old-vote';
             $successMessage = "Vote updated successfully";
@@ -246,23 +272,54 @@ class ProblematicController extends AbstractController
     }
 
     /**
-     * @Route("/api/problematic/{id}/vote", name="all_problematic_votes", methods={"GET"}, requirements={"id"="\d+"})
+     * @Route("/api/problematic/{id}/count", name="all_problematic_votes", methods={"GET"}, requirements={"id"="\d+"})
      */
     public function getAllProblematicVotesAction(Request $request, $id)
     {
         $problematic = $this->em->getRepository(Problematic::class)->find($id);
         if (null === $problematic)
             throw new HttpException(404, "Problematic not found.");
-        $results = $this->em->getRepository(Vote::class)->getCountGood();
+        $results = $this->em->getRepository(Comment::class)->getCount($problematic);
         if (null !== $results['1'])
-            $extras['count'] = $results['1'];
+            $extras['countComments'] = $results['1'] + 0;
         else
-            $extras['count'] = 0;
+            $extras['countComments'] = 0;
+        $resultsGood = $this->em->getRepository(Vote::class)->getCountGood($problematic);
+        $resultsNotGood = $this->em->getRepository(Vote::class)->getCountNotGood($problematic);
+        if (null !== $resultsGood['1'] && null !== $resultsNotGood['1'])
+            $extras['countVotes'] = $resultsGood['1'] - $resultsNotGood['1'];
+        else
+            $extras['countVotes'] = 0;
+
         return new JsonResponse([
             'code' => 200,
             'message' => 'Success',
             'extras' => $extras
-        ]);
+        ], 200);
     }
 
+    /**
+     * @Route("/api/current/problematic/{id}/vote", name="current_problematic_vote", methods={"GET"}, requirements={"id"="\d+"})
+     */
+    public function getCurrentProblematicVoteAction(Request $request, $id)
+    {
+        $code = 200;
+        $message = "You don't have any vote in this problematic";
+        $extras = NULL;
+
+        $problematic = $this->em->getRepository(Problematic::class)->find($id);
+        if (null === $problematic)
+            throw new HttpException(404, "Problematic not found.");
+        $vote = $this->em->getRepository(Vote::class)->findOneBy(["voter" => $this->cr->getCurrentUser($this), "problematic" => $problematic]);
+        if (null !== $vote) {
+            $extras['vote'] = $vote->getGood();
+            $message = 'Success';
+        }
+
+        return new JsonResponse([
+            'code' => $code,
+            'message' => $message,
+            'extras' => $extras
+        ], $code);
+    }
 }

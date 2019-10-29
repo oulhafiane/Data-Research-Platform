@@ -46,4 +46,15 @@ class CommentRepository extends AbstractRepository
         ;
     }
     */
+
+    public function getCount($problematic)
+    {
+        return $this->createQueryBuilder('v')
+            ->select('count(v.id)')
+            ->where('v.problematic = ?1')
+		    ->setParameter(1, $problematic)
+            ->getQuery()
+            ->getOneOrNullResult()
+        ;
+    }
 }

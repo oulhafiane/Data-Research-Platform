@@ -48,11 +48,25 @@ class VoteRepository extends ServiceEntityRepository
     }
     */
 
-    public function getCountGood()
+    public function getCountGood($problematic)
     {
         return $this->createQueryBuilder('v')
             ->select('count(v.id)')
+            ->where('v.problematic = ?1')
+		    ->setParameter(1, $problematic)
             ->andWhere('v.good = 1')
+            ->getQuery()
+            ->getOneOrNullResult()
+        ;
+    }
+
+    public function getCountNotGood($problematic)
+    {
+        return $this->createQueryBuilder('v')
+            ->select('count(v.id)')
+            ->where('v.problematic = ?1')
+		    ->setParameter(1, $problematic)
+            ->andWhere('v.good = 0')
             ->getQuery()
             ->getOneOrNullResult()
         ;
