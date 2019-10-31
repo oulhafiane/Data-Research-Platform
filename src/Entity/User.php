@@ -70,7 +70,7 @@ abstract class User implements UserInterface
      * @ORM\Column(type="string", length=50)
      * @Assert\NotBlank(groups={"new-user"})
      * @Serializer\SerializedName("firstName")
-     * @Serializer\Groups({"new-user", "infos", "update-user", "list-comments", "list-problematics"})
+     * @Serializer\Groups({"new-user", "infos", "update-user", "list-comments", "list-problematics", "public"})
      */
     private $firstName;
 
@@ -78,7 +78,7 @@ abstract class User implements UserInterface
      * @ORM\Column(type="string", length=50)
      * @Assert\NotBlank(groups={"new-user"})
      * @Serializer\SerializedName("lastName")
-     * @Serializer\Groups({"new-user", "infos", "update-user", "list-comments", "list-problematics"})
+     * @Serializer\Groups({"new-user", "infos", "update-user", "list-comments", "list-problematics", "public"})
      */
     private $lastName;
 
@@ -92,7 +92,7 @@ abstract class User implements UserInterface
     /**
      * @ORM\OneToOne(targetEntity="App\Entity\Photo", cascade={"persist", "remove"})
      * @ORM\JoinColumn(nullable=true)
-     * @Serializer\Groups({"update-user", "infos", "list-comments", "list-problematics"})
+     * @Serializer\Groups({"update-user", "infos", "list-comments", "list-problematics", "public"})
      */
     private $Photo;
 
@@ -104,32 +104,32 @@ abstract class User implements UserInterface
 
     /**
      * @ORM\Column(type="string", length=50, nullable=true)
-     * @Serializer\Groups({"update-user", "infos"})
+     * @Serializer\Groups({"update-user", "infos", "public"})
      */
     private $city;
 
     /**
      * @ORM\Column(type="string", length=50, nullable=true)
-     * @Serializer\Groups({"update-user", "infos"})
+     * @Serializer\Groups({"update-user", "infos", "public"})
      */
     private $country;
 
     /**
      * @ORM\Column(type="string", length=5, nullable=true)
      * @Serializer\SerializedName("postalCode")
-     * @Serializer\Groups({"update-user", "infos"})
+     * @Serializer\Groups({"update-user", "infos", "public"})
      */
     private $postalCode;
 
     /**
      * @ORM\Column(type="string", length=50, nullable=true)
-     * @Serializer\Groups({"update-user", "infos"})
+     * @Serializer\Groups({"update-user", "infos", "public"})
      */
     private $organization;
 
     /**
      * @ORM\Column(type="text", nullable=true)
-     * @Serializer\Groups({"update-user", "infos"})
+     * @Serializer\Groups({"update-user", "infos", "public"})
      */
     private $bio;
 
