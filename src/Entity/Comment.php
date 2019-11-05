@@ -51,6 +51,7 @@ class Comment
 
     /**
      * @ORM\Column(type="datetime")
+     * @Serializer\Type("DateTime<'Y-m-d h:m'>")
      * @Serializer\SerializedName("creationDate")
      * @Serializer\Groups({"list-comments"})
      */
