@@ -46,7 +46,7 @@ class Vote
 
     /**
      * @ORM\Column(type="datetime")
-     * @Serializer\Type("DateTime<'Y-m-d h:m'>")
+     * @Serializer\Type("DateTime<'Y-m-d h:m:s'>")
      * @Serializer\SerializedName("creationDate")
      * @Serializer\Groups({"list-votes"})
      */
