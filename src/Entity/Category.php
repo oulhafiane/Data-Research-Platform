@@ -16,13 +16,13 @@ class Category
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
-     * @Serializer\Groups({"list-categories", "list-problematics"})
+     * @Serializer\Groups({"list-categories", "list-problematics", "infos"})
      */
     private $id;
 
     /**
      * @ORM\Column(type="string", length=100)
-     * @Serializer\Groups({"list-categories", "list-problematics"})
+     * @Serializer\Groups({"list-categories", "list-problematics", "infos"})
      */
     private $title;
 
@@ -32,9 +32,15 @@ class Category
      */
     private $subCategories;
 
+    /**
+     * @ORM\ManyToMany(targetEntity="App\Entity\Searcher", mappedBy="domains")
+     */
+    private $searchers;
+
     public function __construct()
     {
         $this->subCategories = new ArrayCollection();
+        $this->searchers = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -80,6 +86,34 @@ class Category
             if ($subCategory->getCategory() === $this) {
                 $subCategory->setCategory(null);
             }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Searcher[]
+     */
+    public function getSearchers(): Collection
+    {
+        return $this->searchers;
+    }
+
+    public function addSearcher(Searcher $searcher): self
+    {
+        if (!$this->searchers->contains($searcher)) {
+            $this->searchers[] = $searcher;
+            $searcher->addDomain($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSearcher(Searcher $searcher): self
+    {
+        if ($this->searchers->contains($searcher)) {
+            $this->searchers->removeElement($searcher);
+            $searcher->removeDomain($this);
         }
 
         return $this;

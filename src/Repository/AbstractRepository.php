@@ -2,6 +2,7 @@
 
 namespace App\Repository;
 
+use App\Entity\Vote;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Pagerfanta\Adapter\DoctrineORMAdapter;
@@ -28,14 +29,24 @@ abstract class AbstractRepository extends ServiceEntityRepository
 		return $pager;
 	}
 
-	public function findProblematic($page = 1, $limit = 10, $category = null)
+	public function findProblematic($page = 1, $limit = 10, $orderBy = null, $order = null)
 	{
 		$qb = $this->createQueryBuilder('s')
-			->select('s');
+			->select('s')
+			->addSelect('(SELECT COALESCE(SUM(v.good) - (COUNT(v.good) - SUM(v.good)),0)
+				   FROM \App\Entity\Vote v
+				   WHERE v.problematic = s.id) as votes');
+		
+		$option = 'DESC';
+		if (null !== $order && $order === 'ASC')
+			$option = 'ASC';
 
-		if (null !== $category && is_numeric($category)) {
-			$qb->where('s.category = ?1')
-				->setParameter(1, $category);
+		if (null !== $orderBy && $orderBy === 'DATE') {
+			$qb->orderBy('s.creationDate', $option)
+			->addOrderBy('votes', $option);
+		} else {
+			$qb->orderBy('votes', $option)
+			->addOrderBy('s.creationDate', $option);
 		}
 
 		return $this->paginate($qb, $limit, $page);
@@ -44,11 +55,15 @@ abstract class AbstractRepository extends ServiceEntityRepository
 	public function findComments($page = 1, $limit = 10, $problematic)
 	{
 		$qb = $this->createQueryBuilder('s')
-			->select('s');
+			->select('s')
+			->addSelect('(SELECT COALESCE(SUM(v.good) - (COUNT(v.good) - SUM(v.good)),0)
+				   FROM \App\Entity\Vote v
+				   WHERE v.comment = s.id) as votes');
 
 		$qb->where('s.problematic = ?1')
-				->setParameter(1, $problematic);
-
+				->setParameter(1, $problematic)
+				->orderBy('votes', 'DESC')
+				->addOrderBy('s.creationDate', 'DESC');
 		return $this->paginate($qb, $limit, $page);
 	}
 }

@@ -13,8 +13,8 @@ use Ramsey\Uuid\Uuid;
  * @ORM\Entity(repositoryClass="App\Repository\UserRepository")
  * @ORM\InheritanceType("SINGLE_TABLE")
  * @ORM\DiscriminatorColumn(name="type", type="string")
- * @ORM\DiscriminatorMap({"searcher" = "Searcher", "customer" = "Customer"})
- * @Serializer\Discriminator(field = "type", disabled = false, map = {"searcher" = "App\Entity\Searcher", "customer": "App\Entity\Customer"})
+ * @ORM\DiscriminatorMap({"searcher" = "Searcher", "customer" = "Customer", "admin" = "Admin"})
+ * @Serializer\Discriminator(field = "type", disabled = false, map = {"searcher" = "App\Entity\Searcher", "customer": "App\Entity\Customer", "admin" = "App\Entity\Admin"})
  */
 abstract class User implements UserInterface
 {
@@ -83,13 +83,6 @@ abstract class User implements UserInterface
     private $lastName;
 
     /**
-     * @ORM\Column(type="string", length=20)
-     * @Assert\NotBlank(groups={"new-user"})
-     * @Serializer\Groups({"new-user", "infos", "update-user"})
-     */
-    private $phone;
-
-    /**
      * @ORM\OneToOne(targetEntity="App\Entity\Photo", cascade={"persist", "remove"})
      * @ORM\JoinColumn(nullable=true)
      * @Serializer\Groups({"update-user", "infos", "list-comments", "list-problematics", "public"})
@@ -97,41 +90,19 @@ abstract class User implements UserInterface
     private $Photo;
 
     /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     * @Serializer\Groups({"update-user", "infos"})
-     */
-    private $address;
-
-    /**
      * @ORM\Column(type="string", length=50, nullable=true)
-     * @Serializer\Groups({"update-user", "infos", "public"})
-     */
-    private $city;
-
-    /**
-     * @ORM\Column(type="string", length=50, nullable=true)
-     * @Serializer\Groups({"update-user", "infos", "public"})
-     */
-    private $country;
-
-    /**
-     * @ORM\Column(type="string", length=5, nullable=true)
-     * @Serializer\SerializedName("postalCode")
-     * @Serializer\Groups({"update-user", "infos", "public"})
-     */
-    private $postalCode;
-
-    /**
-     * @ORM\Column(type="string", length=50, nullable=true)
-     * @Serializer\Groups({"update-user", "infos", "public"})
+     * @Assert\NotBlank(groups={"new-user"})
+     * @Serializer\Groups({"new-user", "update-user", "infos", "public"})
      */
     private $organization;
 
     /**
-     * @ORM\Column(type="text", nullable=true)
-     * @Serializer\Groups({"update-user", "infos", "public"})
+     * @ORM\Column(type="string", length=50, nullable=true)
+     * @Assert\NotBlank(groups={"new-user"})
+     * @Serializer\SerializedName("jobTitle")
+     * @Serializer\Groups({"new-user", "update-user", "infos", "public"})
      */
-    private $bio;
+    private $jobTitle;
 
     /**
      * @ORM\Column(type="datetime")
@@ -269,18 +240,6 @@ abstract class User implements UserInterface
         return $this;
     }
 
-    public function getPhone(): ?string
-    {
-        return $this->phone;
-    }
-
-    public function setPhone(string $phone): self
-    {
-        $this->phone = $phone;
-
-        return $this;
-    }
-
     public function getPhoto(): ?Photo
     {
         return $this->Photo;
@@ -289,54 +248,6 @@ abstract class User implements UserInterface
     public function setPhoto(?Photo $Photo): self
     {
         $this->Photo = $Photo;
-
-        return $this;
-    }
-
-    public function getAddress(): ?string
-    {
-        return $this->address;
-    }
-
-    public function setAddress(?string $address): self
-    {
-        $this->address = $address;
-
-        return $this;
-    }
-
-    public function getCity(): ?string
-    {
-        return $this->city;
-    }
-
-    public function setCity(?string $city): self
-    {
-        $this->city = $city;
-
-        return $this;
-    }
-
-    public function getCountry(): ?string
-    {
-        return $this->country;
-    }
-
-    public function setCountry(?string $country): self
-    {
-        $this->country = $country;
-
-        return $this;
-    }
-
-    public function getPostalCode(): ?string
-    {
-        return $this->postalCode;
-    }
-
-    public function setPostalCode(?string $postalCode): self
-    {
-        $this->postalCode = $postalCode;
 
         return $this;
     }
@@ -353,14 +264,14 @@ abstract class User implements UserInterface
         return $this;
     }
 
-    public function getBio(): ?string
+    public function getJobTitle(): ?string
     {
-        return $this->bio;
+        return $this->jobTitle;
     }
 
-    public function setBio(?string $bio): self
+    public function setJobTitle(?string $jobTitle): self
     {
-        $this->bio = $bio;
+        $this->jobTitle = $jobTitle;
 
         return $this;
     }

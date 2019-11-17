@@ -70,13 +70,18 @@ class UpdateUserController extends AbstractController
         $current->setFirstName($infos->getFirstName());
         $current->setLastName($infos->getLastName());
         $current->setOrganization($infos->getOrganization());
-        $current->setAddress($infos->getAddress());
-        $current->setCity($infos->getCity());
-        $current->setCountry($infos->getCountry());
-        $current->setPostalCode($infos->getPostalCode());
-        $current->setPhone($infos->getPhone());
-        $current->setBio($infos->getBio());
-
+        $current->setJobTitle($infos->getJobTitle());
+        if ($current instanceof Searcher) {
+            $current->setOrganizationAddress($infos->getOrganizationAddress());
+            $current->setOrganizationCity($infos->getOrganizationCity());
+            $current->setOrganizationCountry($infos->getOrganizationCountry());
+            $current->setPhone($infos->getPhone());
+            $current->setBio($infos->getBio());
+            foreach($infos->getDomains() as $domain) {
+                $current->addDomain($domain);
+            }
+        }
+        
         return $current;
     }
 

@@ -118,6 +118,13 @@ class Problematic
     private $creationDate;
 
     /**
+     * @ORM\Column(type="array", nullable=true)
+     * @Serializer\Type("array")
+	 * @Serializer\Groups({"new-problematic", "list-problematics"})
+     */
+    private $keywords = [];
+
+    /**
      * @ORM\PrePersist
      */
     public function onPrePersist()
@@ -341,5 +348,17 @@ class Problematic
     public function getCreationDate(): ?\DateTimeInterface
     {
         return $this->creationDate;
+    }
+
+    public function getKeywords(): ?array
+    {
+        return $this->keywords;
+    }
+
+    public function setKeywords(?array $keywords): self
+    {
+        $this->keywords = $keywords;
+
+        return $this;
     }
 }

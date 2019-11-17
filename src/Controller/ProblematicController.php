@@ -106,8 +106,9 @@ class ProblematicController extends AbstractController
     {
         $page = $request->query->get('page', 1);
         $limit = $request->query->get('limit', 10);
-        $category = $request->query->get('category', null);
-        $results = $this->em->getRepository(Problematic::class)->findProblematic($page, $limit, $category)->getCurrentPageResults();
+        $orderBy = $request->query->get('orderBy', null);
+        $order = $request->query->get('order', null);
+        $results = $this->em->getRepository(Problematic::class)->findProblematic($page, $limit, $orderBy, $order)->getCurrentPageResults();
         $problematics = array();
         foreach ($results as $result) {
             $problematics[] = $result;
@@ -165,6 +166,30 @@ class ProblematicController extends AbstractController
         ], $code);
     }
 
+    private function deleteVote($vote)
+    {
+        $code = 401;
+        $message = "Unauthorized";
+
+        if (null !== $vote) {
+            try {
+                $this->em->remove($vote);
+                $this->em->flush();
+                $code = 202;
+                $message = "Vote deleted successfully";
+            } catch (\Exception $ex) {
+                throw new HttpException(500, $ex->getMessage());
+            }
+        } else {
+            throw new HttpException(404, "Vote not found.");
+        }
+
+        return new JsonResponse([
+            'code' => $code,
+            'message' => $message
+        ], $code);
+    }
+
     /**
      * @Route("/api/problematic/{id}/comment", name="all_problematic_comments", methods={"GET"}, requirements={"id"="\d+"})
      */
@@ -187,27 +212,63 @@ class ProblematicController extends AbstractController
         return $response;
     }
 
-    private function deleteVote($vote)
+    /**
+     * @Route("/api/comment/{id}/vote", name="new_vote_comment", methods={"POST"}, requirements={"id"="\d+"})
+     */
+    public function newVoteCommentAction(Request $request, $id)
     {
+        $this->checkRoleAndId($request);
+
         $code = 401;
         $message = "Unauthorized";
+        $extras = NULL;
+        $group = 'new-vote';
+        $successMessage = "Vote added successfully";
+
+        $comment = $this->em->getRepository(Comment::class)->find($id);
+        if (null === $comment)
+            throw new HttpException(404, "Comment not found.");
+
+        $data = json_decode($request->getContent(), true);
+        if (null !== $data && !array_key_exists('good', $data))
+            throw new HttpException(406, 'Field \'good\' not found.');
+        $vote = $this->em->getRepository(Vote::class)->findOneBy(["voter" => $this->cr->getCurrentUser($this), "comment" => $comment]);
 
         if (null !== $vote) {
+            if ($vote->getGood() === $data['good']) {
+                return $this->deleteVote($vote);
+            }
+            $vote->setGood($data['good']);
+            $group = 'old-vote';
+            $successMessage = "Vote updated successfully";
+        } else {
+            $vote = new Vote();
+            $vote->setVoter($this->cr->getCurrentUser($this));
+            $vote->setComment($comment);
+            $vote->setGood($data['good']);
+        }
+
+        $violations = $this->validator->validate($vote, null, $group);
+        if (count($violations) !== 0) {
+            foreach ($violations as $violation) {
+                $extras[$violation->getPropertyPath()] = $violation->getMessage();
+            }
+        } else {
             try {
-                $this->em->remove($vote);
+                $this->em->persist($vote);
                 $this->em->flush();
-                $code = 202;
-                $message = "Vote deleted successfully";
+                $extras['id'] = $vote->getId();
+                $code = 201;
+                $message = $successMessage;
             } catch (\Exception $ex) {
                 throw new HttpException(500, $ex->getMessage());
             }
-        } else {
-            throw new HttpException(404, "Vote not found.");
         }
-
+        
         return new JsonResponse([
             'code' => $code,
-            'message' => $message
+            'message' => $message,
+            'extras' => $extras
         ], $code);
     }
 
