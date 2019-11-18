@@ -30,7 +30,7 @@ abstract class User implements UserInterface
     /**
      * @ORM\Column(type="uuid", unique=true)
      * @Serializer\Type("string")
-     * @Serializer\Groups({"infos", "list-comments", "list-problematics"})
+     * @Serializer\Groups({"infos", "list-comments", "list-problematics", "list-applications", "all-profiles"})
      */
     private $uuid;
 
@@ -70,7 +70,7 @@ abstract class User implements UserInterface
      * @ORM\Column(type="string", length=50)
      * @Assert\NotBlank(groups={"new-user"})
      * @Serializer\SerializedName("firstName")
-     * @Serializer\Groups({"new-user", "infos", "update-user", "list-comments", "list-problematics", "public"})
+     * @Serializer\Groups({"new-user", "infos", "update-user", "list-comments", "list-problematics", "public", "all-profiles"})
      */
     private $firstName;
 
@@ -78,7 +78,7 @@ abstract class User implements UserInterface
      * @ORM\Column(type="string", length=50)
      * @Assert\NotBlank(groups={"new-user"})
      * @Serializer\SerializedName("lastName")
-     * @Serializer\Groups({"new-user", "infos", "update-user", "list-comments", "list-problematics", "public"})
+     * @Serializer\Groups({"new-user", "infos", "update-user", "list-comments", "list-problematics", "public", "all-profiles"})
      */
     private $lastName;
 
@@ -103,6 +103,39 @@ abstract class User implements UserInterface
      * @Serializer\Groups({"new-user", "update-user", "infos", "public"})
      */
     private $jobTitle;
+    
+    /**
+    * @ORM\Column(type="string", length=255, nullable=true)
+    * @Serializer\SerializedName("organizationAddress")
+    * @Serializer\Groups({"update-user", "infos"})
+    */
+    private $organizationAddress;
+
+    /**
+        * @ORM\Column(type="string", length=50, nullable=true)
+        * @Serializer\SerializedName("organizationCity")
+        * @Serializer\Groups({"update-user", "infos", "public"})
+        */
+    private $organizationCity;
+
+    /**
+        * @ORM\Column(type="string", length=50, nullable=true)
+        * @Serializer\SerializedName("organizationCountry")
+        * @Serializer\Groups({"update-user", "infos", "public"})
+        */
+    private $organizationCountry;
+
+    /**
+        * @ORM\Column(type="text", nullable=true)
+        * @Serializer\Groups({"update-user", "infos", "public"})
+        */
+    private $bio;
+
+    /**
+        * @ORM\Column(type="string", length=20, nullable=true)
+        * @Serializer\Groups({"new-user", "infos", "update-user"})
+        */
+    private $phone;
 
     /**
      * @ORM\Column(type="datetime")
@@ -115,6 +148,11 @@ abstract class User implements UserInterface
     protected $isActive;
 
     /**
+     * @ORM\OneToOne(targetEntity="App\Entity\SearcherApplications", mappedBy="user", cascade={"persist", "remove"})
+     */
+    private $searcherApplication;
+
+    /**
      * @ORM\PrePersist
      */
     public function onPrePersist()
@@ -124,6 +162,8 @@ abstract class User implements UserInterface
             $this->roles[] = 'ROLE_SEARCHER';
         else if ($this instanceof Reseller)
             $this->roles[] = 'ROLE_CUSTOMER';
+        else if ($this instanceof Admin)
+            $this->roles[] = 'ROLE_ADMIN';
         $this->subscriptionDate = new \DateTime();
         $this->setIsActive(True);
     }
@@ -275,6 +315,66 @@ abstract class User implements UserInterface
 
         return $this;
     }
+    
+    public function getOrganizationAddress(): ?string
+    {
+        return $this->organizationAddress;
+    }
+
+    public function setOrganizationAddress(?string $address): self
+    {
+        $this->organizationAddress = $address;
+
+        return $this;
+    }
+
+    public function getOrganizationCity(): ?string
+    {
+        return $this->organizationCity;
+    }
+
+    public function setOrganizationCity(?string $city): self
+    {
+        $this->organizationCity = $city;
+
+        return $this;
+    }
+
+    public function getOrganizationCountry(): ?string
+    {
+        return $this->organizationCountry;
+    }
+
+    public function setOrganizationCountry(?string $country): self
+    {
+        $this->organizationCountry = $country;
+
+        return $this;
+    }
+
+    public function getBio(): ?string
+    {
+        return $this->bio;
+    }
+
+    public function setBio(?string $bio): self
+    {
+        $this->bio = $bio;
+
+        return $this;
+    }
+
+    public function getPhone(): ?string
+    {
+        return $this->phone;
+    }
+
+    public function setPhone(string $phone): self
+    {
+        $this->phone = $phone;
+
+        return $this;
+    }
 
     public function getSubscriptionDate(): ?\DateTimeInterface
     {
@@ -289,6 +389,23 @@ abstract class User implements UserInterface
     public function setIsActive(bool $isActive): self
     {
         $this->isActive = $isActive;
+
+        return $this;
+    }
+
+    public function getSearcherApplication(): ?SearcherApplications
+    {
+        return $this->searcherApplication;
+    }
+
+    public function setSearcherApplication(SearcherApplications $searcherApplication): self
+    {
+        $this->searcherApplication = $searcherApplication;
+
+        // set the owning side of the relation if necessary
+        if ($this !== $searcherApplication->getUser()) {
+            $searcherApplication->setUser($this);
+        }
 
         return $this;
     }

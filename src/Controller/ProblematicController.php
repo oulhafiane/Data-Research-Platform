@@ -121,6 +121,40 @@ class ProblematicController extends AbstractController
     }
 
     /**
+     * @Route("/api/problematic/filter", name="filtred_problematic", methods={"OPTIONS"})
+     */
+    public function getFiltredProblematicAction(Request $request)
+    {
+        $page = $request->query->get('page', 1);
+        $limit = $request->query->get('limit', 10);
+        $orderBy = $request->query->get('orderBy', null);
+        $order = $request->query->get('order', null);
+        $data = json_decode($request->getContent(), true);
+        $searchers = null;
+        $categories = null;
+        $subCategories = null;
+        $keywords = null;
+        if (isset($data['searchers']) && is_array($data['searchers']))
+            $searchers = $data['searchers'];
+        if (isset($data['categories']) && is_array($data['categories']))
+            $categories = $data['categories'];
+        if (isset($data['subCategories']) && is_array($data['subCategories']))
+            $subCategories = $data['subCategories'];
+        if (isset($data['keywords']) && is_array($data['keywords']))
+            $keywords = $data['keywords'];
+        $results = $this->em->getRepository(Problematic::class)->filterProblematic($page, $limit, $orderBy, $order, $searchers, $categories, $subCategories, $keywords)->getCurrentPageResults();
+        $problematics = array();
+        foreach ($results as $result) {
+            $problematics[] = $result;
+        }
+        $data = $this->serializer->serialize($problematics, 'json', SerializationContext::create()->setGroups(array('list-problematics')));
+        $response = new Response($data);
+        $response->headers->set('Content-Type', 'application/json');
+
+        return $response;
+    }
+
+    /**
      * @Route("/api/problematic/{id}/comment", name="new_comment", methods={"POST"}, requirements={"id"="\d+"})
      */
     public function newCommentAction(Request $request, $id)

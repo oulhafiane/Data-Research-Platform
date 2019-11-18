@@ -14,39 +14,6 @@ use Symfony\Component\Validator\Constraints as Assert;
 class Searcher extends User
 {
     /**
-     * @ORM\Column(type="string", length=255, nullable=true)
-     * @Serializer\SerializedName("organizationAddress")
-     * @Serializer\Groups({"update-user", "infos"})
-     */
-    private $organizationAddress;
-
-    /**
-     * @ORM\Column(type="string", length=50, nullable=true)
-     * @Serializer\SerializedName("organizationCity")
-     * @Serializer\Groups({"update-user", "infos", "public"})
-     */
-    private $organizationCity;
-
-    /**
-     * @ORM\Column(type="string", length=50, nullable=true)
-     * @Serializer\SerializedName("organizationCountry")
-     * @Serializer\Groups({"update-user", "infos", "public"})
-     */
-    private $organizationCountry;
-
-    /**
-     * @ORM\Column(type="text", nullable=true)
-     * @Serializer\Groups({"update-user", "infos", "public"})
-     */
-    private $bio;
-
-    /**
-     * @ORM\Column(type="string", length=20)
-     * @Serializer\Groups({"new-user", "infos", "update-user"})
-     */
-    private $phone;
-
-    /**
      * @ORM\OneToMany(targetEntity="App\Entity\Problematic", mappedBy="owner", orphanRemoval=true)
      */
     private $problematics;
@@ -75,66 +42,6 @@ class Searcher extends User
         $this->votes = new ArrayCollection();
         $this->comments = new ArrayCollection();
         $this->domains = new ArrayCollection();
-    }
-
-    public function getOrganizationAddress(): ?string
-    {
-        return $this->organizationAddress;
-    }
-
-    public function setOrganizationAddress(?string $address): self
-    {
-        $this->organizationAddress = $address;
-
-        return $this;
-    }
-
-    public function getOrganizationCity(): ?string
-    {
-        return $this->organizationCity;
-    }
-
-    public function setOrganizationCity(?string $city): self
-    {
-        $this->organizationCity = $city;
-
-        return $this;
-    }
-
-    public function getOrganizationCountry(): ?string
-    {
-        return $this->organizationCountry;
-    }
-
-    public function setOrganizationCountry(?string $country): self
-    {
-        $this->organizationCountry = $country;
-
-        return $this;
-    }
-
-    public function getBio(): ?string
-    {
-        return $this->bio;
-    }
-
-    public function setBio(?string $bio): self
-    {
-        $this->bio = $bio;
-
-        return $this;
-    }
-
-    public function getPhone(): ?string
-    {
-        return $this->phone;
-    }
-
-    public function setPhone(string $phone): self
-    {
-        $this->phone = $phone;
-
-        return $this;
     }
 
     /**

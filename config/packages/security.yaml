@@ -11,6 +11,12 @@ security:
                 class: App\Entity\User
                 property: email
     firewalls:
+        admin:
+            pattern:    ^/api/admin
+            stateless:  true
+            guard:
+                authenticators:
+                    - lexik_jwt_authentication.jwt_token_authenticator
         current:
             pattern:    ^/api/current
             stateless:  true
@@ -19,7 +25,7 @@ security:
                     - lexik_jwt_authentication.jwt_token_authenticator
         public:
             pattern:    ^/api
-            methods: [GET]
+            methods: [GET, OPTIONS]
             stateless:  true
             anonymous: true
         register:
@@ -62,6 +68,7 @@ security:
     access_control:
          - { path: ^/api/token/refresh, roles: IS_AUTHENTICATED_ANONYMOUSLY }
          - { path: ^/api/register$, roles: IS_AUTHENTICATED_ANONYMOUSLY, methods: [POST] }
+         - { path: ^/api/admin, roles: ROLE_ADMIN }
          - { path: ^/api/current, roles: IS_AUTHENTICATED_FULLY }
-         - { path: ^/api, roles: IS_AUTHENTICATED_ANONYMOUSLY, methods: [GET] }
+         - { path: ^/api, roles: IS_AUTHENTICATED_ANONYMOUSLY, methods: [GET, OPTIONS] }
          - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }
