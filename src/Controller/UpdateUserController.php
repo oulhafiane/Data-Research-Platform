@@ -79,6 +79,9 @@ class UpdateUserController extends AbstractController
         $current->setOrganizationCountry($infos->getOrganizationCountry());
         $current->setPhone($infos->getPhone());
         $current->setBio($infos->getBio());
+        foreach($current->getDomains() as $domain) {
+            $current->removeDomain($domain);
+        }
         foreach($infos->getDomains() as $domain) {
             $current->addDomain($domain);
         }
