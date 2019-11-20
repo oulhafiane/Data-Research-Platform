@@ -153,6 +153,14 @@ abstract class User implements UserInterface
     private $searcherApplication;
 
     /**
+     * @ORM\ManyToMany(targetEntity="App\Entity\Category", inversedBy="users")
+     * @Serializer\Type("ArrayCollection<App\Entity\Category>")
+	 * @Serializer\Groups({"update-user", "infos"})
+	 * @Assert\Valid(groups={"update-user"})
+     */
+    private $domains;
+
+    /**
      * @ORM\PrePersist
      */
     public function onPrePersist()
@@ -405,6 +413,32 @@ abstract class User implements UserInterface
         // set the owning side of the relation if necessary
         if ($this !== $searcherApplication->getUser()) {
             $searcherApplication->setUser($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Category[]
+     */
+    public function getDomains(): Collection
+    {
+        return $this->domains;
+    }
+
+    public function addDomain(Category $domain): self
+    {
+        if (!$this->domains->contains($domain)) {
+            $this->domains[] = $domain;
+        }
+
+        return $this;
+    }
+
+    public function removeDomain(Category $domain): self
+    {
+        if ($this->domains->contains($domain)) {
+            $this->domains->removeElement($domain);
         }
 
         return $this;

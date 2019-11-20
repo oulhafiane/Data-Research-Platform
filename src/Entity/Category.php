@@ -33,9 +33,9 @@ class Category
     private $subCategories;
 
     /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\Searcher", mappedBy="domains")
+     * @ORM\ManyToMany(targetEntity="App\Entity\User", mappedBy="domains")
      */
-    private $searchers;
+    private $users;
 
     public function __construct()
     {
@@ -94,26 +94,26 @@ class Category
     /**
      * @return Collection|Searcher[]
      */
-    public function getSearchers(): Collection
+    public function getUsers(): Collection
     {
-        return $this->searchers;
+        return $this->users;
     }
 
-    public function addSearcher(Searcher $searcher): self
+    public function addUser(User $user): self
     {
-        if (!$this->searchers->contains($searcher)) {
-            $this->searchers[] = $searcher;
-            $searcher->addDomain($this);
+        if (!$this->users->contains($user)) {
+            $this->users[] = $user;
+            $user->addDomain($this);
         }
 
         return $this;
     }
 
-    public function removeSearcher(Searcher $searcher): self
+    public function removeUser(User $user): self
     {
-        if ($this->searchers->contains($searcher)) {
-            $this->searchers->removeElement($searcher);
-            $searcher->removeDomain($this);
+        if ($this->users->contains($user)) {
+            $this->users->removeElement($user);
+            $user->removeDomain($this);
         }
 
         return $this;

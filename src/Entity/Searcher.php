@@ -28,14 +28,6 @@ class Searcher extends User
      */
     private $comments;
 
-    /**
-     * @ORM\ManyToMany(targetEntity="App\Entity\Category", inversedBy="searchers")
-     * @Serializer\Type("ArrayCollection<App\Entity\Category>")
-	 * @Serializer\Groups({"update-user", "infos"})
-	 * @Assert\Valid(groups={"update-user"})
-     */
-    private $domains;
-
     public function __construct()
     {
         $this->problematics = new ArrayCollection();
@@ -132,32 +124,6 @@ class Searcher extends User
             if ($comment->getOwner() === $this) {
                 $comment->setOwner(null);
             }
-        }
-
-        return $this;
-    }
-
-    /**
-     * @return Collection|Category[]
-     */
-    public function getDomains(): Collection
-    {
-        return $this->domains;
-    }
-
-    public function addDomain(Category $domain): self
-    {
-        if (!$this->domains->contains($domain)) {
-            $this->domains[] = $domain;
-        }
-
-        return $this;
-    }
-
-    public function removeDomain(Category $domain): self
-    {
-        if ($this->domains->contains($domain)) {
-            $this->domains->removeElement($domain);
         }
 
         return $this;
