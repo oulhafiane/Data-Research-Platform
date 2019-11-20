@@ -5,6 +5,7 @@ namespace App\Controller;
 use App\Entity\User;
 use App\Entity\Searcher;
 use App\Entity\Customer;
+use App\Entity\Admin;
 use App\Entity\Photo;
 use App\Service\CurrentUser;
 use App\Service\UpdateFormHandler;
@@ -43,6 +44,8 @@ class UpdateUserController extends AbstractController
             $data['type'] = "customer";
         else if ($current instanceof Searcher)
             $data['type'] = "searcher";
+        else if ($current instanceof Admin)
+            $data['type'] = "admin";
         else
             throw new HttpException(500, 'Cannot found type of user.');
 
