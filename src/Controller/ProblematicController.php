@@ -108,12 +108,18 @@ class ProblematicController extends AbstractController
         $limit = $request->query->get('limit', 12);
         $orderBy = $request->query->get('orderBy', null);
         $order = $request->query->get('order', null);
-        $results = $this->em->getRepository(Problematic::class)->findProblematic($page, $limit, $orderBy, $order)->getCurrentPageResults();
+        $pager = $this->em->getRepository(Problematic::class)->findProblematic($page, $limit, $orderBy, $order);
+        $results = $pager->getCurrentPageResults();
+        $nbPages = $pager->getNbPages();
+        $currentPage = $pager->getCurrentPage();
+        $maxPerPage = $pager->getMaxPerPage();
+        $itemsCount = $pager->count();
         $problematics = array();
         foreach ($results as $result) {
             $problematics[] = $result;
         }
-        $data = $this->serializer->serialize($problematics, 'json', SerializationContext::create()->setGroups(array('list-problematics')));
+        $data = array('nbPages' => $nbPages, 'currentPage' => $currentPage, 'maxPerPage' => $maxPerPage, 'itemsCount' => $itemsCount, 'problematics' => $problematics);
+        $data = $this->serializer->serialize($data, 'json', SerializationContext::create()->setGroups(array('list-problematics')));
         $response = new Response($data);
         $response->headers->set('Content-Type', 'application/json');
 
@@ -142,12 +148,18 @@ class ProblematicController extends AbstractController
             $subCategories = $data['subCategories'];
         if (isset($data['keywords']) && is_array($data['keywords']))
             $keywords = $data['keywords'];
-        $results = $this->em->getRepository(Problematic::class)->filterProblematic($page, $limit, $orderBy, $order, $searchers, $categories, $subCategories, $keywords)->getCurrentPageResults();
+        $pager = $this->em->getRepository(Problematic::class)->filterProblematic($page, $limit, $orderBy, $order, $searchers, $categories, $subCategories, $keywords);
+        $results = $pager->getCurrentPageResults();
+        $nbPages = $pager->getNbPages();
+        $currentPage = $pager->getCurrentPage();
+        $maxPerPage = $pager->getMaxPerPage();
+        $itemsCount = $pager->count();
         $problematics = array();
         foreach ($results as $result) {
             $problematics[] = $result;
         }
-        $data = $this->serializer->serialize($problematics, 'json', SerializationContext::create()->setGroups(array('list-problematics')));
+        $data = array('nbPages' => $nbPages, 'currentPage' => $currentPage, 'maxPerPage' => $maxPerPage, 'itemsCount' => $itemsCount, 'problematics' => $problematics);
+        $data = $this->serializer->serialize($data, 'json', SerializationContext::create()->setGroups(array('list-problematics')));
         $response = new Response($data);
         $response->headers->set('Content-Type', 'application/json');
 

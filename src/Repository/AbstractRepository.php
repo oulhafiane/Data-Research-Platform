@@ -2,7 +2,6 @@
 
 namespace App\Repository;
 
-use App\Entity\Vote;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\ORM\QueryBuilder;
 use Pagerfanta\Adapter\DoctrineORMAdapter;
@@ -20,7 +19,7 @@ abstract class AbstractRepository extends ServiceEntityRepository
 		if (!is_numeric($page))
 			$page = 1;
 		if (!is_numeric($limit))
-			$limit = 10;
+			$limit = 12;
 		if ($limit > 50)
 			$limit = 50;
 		$pager->setCurrentPage($page);
