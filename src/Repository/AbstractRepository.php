@@ -29,7 +29,7 @@ abstract class AbstractRepository extends ServiceEntityRepository
 		return $pager;
 	}
 
-	public function findProblematic($page = 1, $limit = 10, $orderBy = null, $order = null)
+	public function findProblematic($page = 1, $limit = 12, $orderBy = null, $order = null)
 	{
 		$qb = $this->createQueryBuilder('s')
 			->select('s')
@@ -52,7 +52,7 @@ abstract class AbstractRepository extends ServiceEntityRepository
 		return $this->paginate($qb, $limit, $page);
 	}
 
-	public function filterProblematic($page = 1, $limit = 10, $orderBy = null, $order = null, $searchers = null, $categories = null, $subCategories = null, $keywords = null)
+	public function filterProblematic($page = 1, $limit = 12, $orderBy = null, $order = null, $searchers = null, $categories = null, $subCategories = null, $keywords = null)
 	{
 		$qb = $this->createQueryBuilder('s')
 			->select('s')

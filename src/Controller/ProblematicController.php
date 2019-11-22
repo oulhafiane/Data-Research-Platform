@@ -105,7 +105,7 @@ class ProblematicController extends AbstractController
     public function getAllProblematicAction(Request $request)
     {
         $page = $request->query->get('page', 1);
-        $limit = $request->query->get('limit', 10);
+        $limit = $request->query->get('limit', 12);
         $orderBy = $request->query->get('orderBy', null);
         $order = $request->query->get('order', null);
         $results = $this->em->getRepository(Problematic::class)->findProblematic($page, $limit, $orderBy, $order)->getCurrentPageResults();
@@ -126,7 +126,7 @@ class ProblematicController extends AbstractController
     public function getFiltredProblematicAction(Request $request)
     {
         $page = $request->query->get('page', 1);
-        $limit = $request->query->get('limit', 10);
+        $limit = $request->query->get('limit', 12);
         $orderBy = $request->query->get('orderBy', null);
         $order = $request->query->get('order', null);
         $data = json_decode($request->getContent(), true);
