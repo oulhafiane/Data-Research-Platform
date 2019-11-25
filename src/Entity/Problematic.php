@@ -111,7 +111,7 @@ class Problematic
 
     /**
      * @ORM\Column(type="datetime")
-     * @Serializer\Type("DateTime<'Y-m-d h:m:s'>")
+     * @Serializer\Type("DateTime<'Y-m-d'>")
      * @Serializer\SerializedName("creationDate")
      * @Serializer\Groups({"list-problematics"})
      */
