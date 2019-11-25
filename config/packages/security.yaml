@@ -28,7 +28,7 @@ security:
             methods: [GET]
             stateless:  true
             anonymous: true
-        public:
+        public_patch:
             pattern:    ^/api/public
             methods: [PATCH]
             stateless:  true
