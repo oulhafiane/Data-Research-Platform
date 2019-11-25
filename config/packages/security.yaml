@@ -25,7 +25,12 @@ security:
                     - lexik_jwt_authentication.jwt_token_authenticator
         public:
             pattern:    ^/api
-            methods: [GET, OPTIONS]
+            methods: [GET]
+            stateless:  true
+            anonymous: true
+        public:
+            pattern:    ^/api/public
+            methods: [PATCH]
             stateless:  true
             anonymous: true
         register:
@@ -70,5 +75,6 @@ security:
          - { path: ^/api/register$, roles: IS_AUTHENTICATED_ANONYMOUSLY, methods: [POST] }
          - { path: ^/api/admin, roles: ROLE_ADMIN }
          - { path: ^/api/current, roles: IS_AUTHENTICATED_FULLY }
-         - { path: ^/api, roles: IS_AUTHENTICATED_ANONYMOUSLY, methods: [GET, OPTIONS] }
+         - { path: ^/api/public, roles: IS_AUTHENTICATED_ANONYMOUSLY, methods: [PATCH] }
+         - { path: ^/api, roles: IS_AUTHENTICATED_ANONYMOUSLY, methods: [GET] }
          - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }

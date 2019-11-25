@@ -127,7 +127,7 @@ class ProblematicController extends AbstractController
     }
 
     /**
-     * @Route("/api/problematic/filter", name="filtred_problematic", methods={"PATCH"})
+     * @Route("/api/public/problematic/filter", name="filtred_problematic", methods={"PATCH"})
      */
     public function getFiltredProblematicAction(Request $request)
     {
