@@ -140,13 +140,13 @@ class ProblematicController extends AbstractController
         $categories = null;
         $subCategories = null;
         $keywords = null;
-        if (isset($data['searchers']) && is_array($data['searchers']))
+        if (isset($data['searchers']) && is_array($data['searchers']) && !empty($data['searchers']))
             $searchers = $data['searchers'];
-        if (isset($data['categories']) && is_array($data['categories']))
+        if (isset($data['categories']) && is_array($data['categories']) && !empty($data['categories']))
             $categories = $data['categories'];
-        if (isset($data['subCategories']) && is_array($data['subCategories']))
+        if (isset($data['subCategories']) && is_array($data['subCategories']) && !empty($data['subCategories']))
             $subCategories = $data['subCategories'];
-        if (isset($data['keywords']) && is_array($data['keywords']))
+        if (isset($data['keywords']) && is_array($data['keywords']) && !empty($data['keywords']))
             $keywords = $data['keywords'];
         $pager = $this->em->getRepository(Problematic::class)->filterProblematic($page, $limit, $orderBy, $order, $searchers, $categories, $subCategories, $keywords);
         $results = $pager->getCurrentPageResults();
