@@ -2,12 +2,15 @@
 
 namespace App\Controller;
 
+use App\Entity\News;
 use App\Entity\Admin;
-use App\Service\CurrentUser;
 use App\Entity\SearcherApplications;
+use App\Service\CurrentUser;
+use App\Service\FormHandler;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Doctrine\ORM\EntityManagerInterface;
@@ -19,12 +22,41 @@ class AdminController extends AbstractController
     private $em;
     private $cr;
     private $serializer;
+    private $form;
 
-    public function __construct(EntityManagerInterface $em, CurrentUser $cr, SerializerInterface $serializer)
+    public function __construct(EntityManagerInterface $em, CurrentUser $cr, SerializerInterface $serializer, FormHandler $form)
     {
         $this->em = $em;
         $this->cr = $cr;
         $this->serializer = $serializer;
+        $this->form = $form;
+    }
+
+    public function setOwner($news)
+    {
+        $news->setCreator($this->cr->getCurrentUser($this));
+
+        return True;
+    }
+
+    private function checkRoleAndId(Request $request)
+    {
+        $data = json_decode($request->getContent(), true);
+        if (null !== $data && array_key_exists('id', $data))
+            throw $this->createAccessDeniedException();
+
+        $this->denyAccessUnlessGranted('ROLE_ADMIN');
+        return;
+    }
+
+    /**
+     * @Route("/api/admin/news/new", name="new_news", methods={"POST"})
+     */
+    public function newNewsAction(Request $request)
+    {
+        $this->checkRoleAndId($request);
+
+        return $this->form->validate($request, News::class, array($this, 'setOwner'), ['new-news'], ['new-news']);
     }
 
     /**

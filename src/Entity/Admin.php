@@ -16,9 +16,15 @@ class Admin extends User
      */
     private $searcherApplications;
 
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\News", mappedBy="creator")
+     */
+    private $news;
+
     public function __construct()
     {
         $this->searcherApplications = new ArrayCollection();
+        $this->news = new ArrayCollection();
     }
 
     /**
@@ -46,6 +52,37 @@ class Admin extends User
             // set the owning side to null (unless already changed)
             if ($searcherApplication->getAcceptedBy() === $this) {
                 $searcherApplication->setAcceptedBy(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|News[]
+     */
+    public function getNews(): Collection
+    {
+        return $this->news;
+    }
+
+    public function addNews(News $news): self
+    {
+        if (!$this->news->contains($news)) {
+            $this->news[] = $news;
+            $news->setCreator($this);
+        }
+
+        return $this;
+    }
+
+    public function removeNews(News $news): self
+    {
+        if ($this->news->contains($news)) {
+            $this->news->removeElement($news);
+            // set the owning side to null (unless already changed)
+            if ($news->getCreator() === $this) {
+                $news->setCreator(null);
             }
         }
 
