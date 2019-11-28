@@ -156,7 +156,7 @@ abstract class User implements UserInterface
     /**
      * @ORM\ManyToMany(targetEntity="App\Entity\Category", inversedBy="users")
      * @Serializer\Type("ArrayCollection<App\Entity\Category>")
-	 * @Serializer\Groups({"update-user", "infos"})
+	 * @Serializer\Groups({"update-user", "infos", "public"})
 	 * @Assert\Valid(groups={"update-user"})
      */
     private $domains;

@@ -22,7 +22,7 @@ class Category
 
     /**
      * @ORM\Column(type="string", length=100)
-     * @Serializer\Groups({"list-categories", "list-problematics", "infos"})
+     * @Serializer\Groups({"list-categories", "list-problematics", "infos", "public"})
      */
     private $title;
 
