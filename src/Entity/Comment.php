@@ -26,7 +26,7 @@ class Comment
 
     /**
      * @ORM\Column(type="text")
-     * @Assert\NotBlank(groups={"new-comment"})
+     * @Assert\NotBlank(groups={"new-comment", "update-comment"})
 	 * @Serializer\Groups({"list-comments"})
      */
     private $text;

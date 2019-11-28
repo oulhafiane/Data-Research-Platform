@@ -246,6 +246,80 @@ class ProblematicController extends AbstractController
     }
 
     /**
+     * @Route("/api/comment/{id}", name="delete_comment", methods={"DELETE"}, requirements={"id"="\d+"})
+     */
+    public function DeleteCommentAction(Request $request, $id)
+    {
+        $this->checkRoleAndId($request);
+
+        $comment = $this->em->getRepository(Comment::class)->find($id);
+        if (null === $comment)
+            throw new HttpException(404, "Comment not found.");
+        $current = $this->cr->getCurrentUser($this);
+        if ($current !== $comment->getOwner())
+            throw new HttpException(401, "You are not the owner.");
+
+        try{
+            $this->em->remove($comment);
+            $this->em->flush();
+        } catch (\Exception $ex) {
+            throw new HttpException(500, $ex->getMessage());
+        }
+
+        return new JsonResponse([
+            'code' => 200,
+            'message' => "Comment deleted successfully.",
+        ], 200);
+    }
+
+    /**
+     * @Route("/api/comment/{id}", name="update_comment", methods={"PATCH"}, requirements={"id"="\d+"})
+     */
+    public function updateCommentAction(Request $request, $id)
+    {
+        $this->checkRoleAndId($request);
+
+        $code = 401;
+        $message = "Unauthorized";
+        $extras = NULL;
+
+        $comment = $this->em->getRepository(Comment::class)->find($id);
+        if (null === $comment)
+            throw new HttpException(404, "Problematic not found.");
+
+        $current = $this->cr->getCurrentUser($this);
+        if ($current !== $comment->getOwner())
+            throw new HttpException(401, "You are not the owner.");
+
+        $data = json_decode($request->getContent(), true);
+        if (null !== $data && !array_key_exists('text', $data))
+            throw new HttpException(406, 'Field \'text\' not found.');
+        $comment->setText($data['text']);
+        $violations = $this->validator->validate($comment, null, "update-comment");
+        if (count($violations) !== 0) {
+            foreach ($violations as $violation) {
+                $extras[$violation->getPropertyPath()] = $violation->getMessage();
+            }
+        } else {
+            try {
+                $this->em->persist($comment);
+                $this->em->flush();
+                $extras['id'] = $comment->getId();
+            } catch (\Exception $ex) {
+                throw new HttpException(500, $ex->getMessage());
+            }
+            $code = 201;
+            $message = "Comment updated successfully";
+        }
+        
+        return new JsonResponse([
+            'code' => $code,
+            'message' => $message,
+            'extras' => $extras
+        ], $code);
+    }
+
+    /**
      * @Route("/api/problematic/{id}/comment", name="new_comment", methods={"POST"}, requirements={"id"="\d+"})
      */
     public function newCommentAction(Request $request, $id)
