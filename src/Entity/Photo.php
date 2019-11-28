@@ -26,7 +26,7 @@ class Photo
 	/**
 	 * @Vich\UploadableField(mapping="photo_user", fileNameProperty="name", size="size")
 	 * @Serializer\Type("string")
-	 * @Serializer\Groups({"new-problematic"})
+	 * @Serializer\Groups({"new-problematic", "update-problematic"})
 	 * @Assert\File(
 	 *	maxSize = "6M",
 	 *	mimeTypes = {

@@ -26,52 +26,52 @@ class Problematic
 
     /**
      * @ORM\Column(type="string", length=100)
-     * @Assert\NotBlank(groups={"new-problematic"})
+     * @Assert\NotBlank(groups={"new-problematic", "update-problematic"})
 	 * @Assert\Length(
 	 *	min = 5,
 	 *	max = 100,
-	 *	groups={"new-problematic"}
+	 *	groups={"new-problematic", "update-problematic"}
 	 * )
-	 * @Serializer\Groups({"new-problematic", "list-problematics"})
+	 * @Serializer\Groups({"new-problematic", "update-problematic", "list-problematics"})
      */
     private $title;
 
     /**
      * @ORM\Column(type="text")
-     * @Assert\NotBlank(groups={"new-problematic"})
-	 * @Serializer\Groups({"new-problematic", "list-problematics"})
+     * @Assert\NotBlank(groups={"new-problematic", "update-problematic"})
+	 * @Serializer\Groups({"new-problematic", "update-problematic", "list-problematics"})
      */
     private $description;
 
     /**
      * @ORM\Column(type="text", nullable=true)
-     * @Serializer\Groups({"new-problematic", "list-problematics"})
+     * @Serializer\Groups({"new-problematic", "update-problematic", "list-problematics"})
      */
     private $solution;
 
     /**
      * @ORM\Column(type="text", nullable=true)
-     * @Serializer\Groups({"new-problematic", "list-problematics"})
+     * @Serializer\Groups({"new-problematic", "update-problematic", "list-problematics"})
      */
     private $advantage;
 
     /**
      * @ORM\Column(type="text", nullable=true)
      * @Serializer\SerializedName("possibleApplication")
-     * @Serializer\Groups({"new-problematic", "list-problematics"})
+     * @Serializer\Groups({"new-problematic", "update-problematic", "list-problematics"})
      */
     private $possibleApplication;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
-     * @Serializer\Groups({"new-problematic", "list-problematics"})
+     * @Serializer\Groups({"new-problematic", "update-problematic", "list-problematics"})
      */
     private $link;
 
     /**
      * @ORM\Column(type="string", length=100)
      * @Assert\NotBlank(groups={"new-problematic"})
-     * @Serializer\Groups({"new-problematic", "list-problematics"})
+     * @Serializer\Groups({"new-problematic", "update-problematic", "list-problematics"})
      */
     private $type;
 
@@ -87,14 +87,14 @@ class Problematic
      * @ORM\JoinColumn(nullable=false)
      * @Assert\NotBlank(groups={"new-problematic"})
      * @Serializer\Type("App\Entity\SubCategory")
-	 * @Serializer\Groups({"new-problematic", "list-problematics"})
+	 * @Serializer\Groups({"new-problematic", "update-problematic", "list-problematics"})
      */
     private $category;
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\Photo", mappedBy="problematic", cascade={"persist"})
      * @Serializer\Type("ArrayCollection<App\Entity\Photo>")
-	 * @Serializer\Groups({"new-problematic", "list-problematics"})
+	 * @Serializer\Groups({"new-problematic", "update-problematic", "list-problematics"})
 	 * @Assert\Valid(groups={"new-photo"})
      */
     private $photos;
@@ -105,7 +105,7 @@ class Problematic
     private $comments;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\Vote", mappedBy="problematic")
+     * @ORM\OneToMany(targetEntity="App\Entity\Vote", mappedBy="problematic", orphanRemoval=true)
      */
     private $votes;
 
@@ -120,7 +120,7 @@ class Problematic
     /**
      * @ORM\Column(type="array", nullable=true)
      * @Serializer\Type("array")
-	 * @Serializer\Groups({"new-problematic", "list-problematics"})
+	 * @Serializer\Groups({"new-problematic", "update-problematic", "list-problematics"})
      */
     private $keywords = [];
 

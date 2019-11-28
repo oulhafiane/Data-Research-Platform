@@ -64,6 +64,29 @@ class ProblematicController extends AbstractController
         return True;
     }
 
+    public function updatePhotos($problematic)
+    {
+        $photos = $problematic->getPhotos();
+        if (null === $photos)
+            return True;
+        foreach ($photos as $photo) {
+            $file = new UploadedBase64EncodedFile(new Base64EncodedFile($photo->getFile()));
+            $photo->setFile($file);
+            $photo->setProblematic($problematic);
+            $photo->setLink($file->getClientOriginalName());
+            $this->imagineCacheManager->getBrowserPath($photo->getLink(), 'photo_thumb');
+            $this->imagineCacheManager->getBrowserPath($photo->getLink(), 'photo_scale_down');
+        }
+        $violations = $this->validator->validate($problematic, null, ['new-photo']);
+        $message = '';
+        foreach ($violations as $violation) {
+            $message .= $violation->getPropertyPath() . ': ' . $violation->getMessage() . ' ';
+        }
+        if (count($violations) !== 0)
+            throw new HttpException(406, $message);
+        return True;
+    }
+
     private function checkRoleAndId(Request $request)
     {
         $data = json_decode($request->getContent(), true);
@@ -72,6 +95,29 @@ class ProblematicController extends AbstractController
 
         $this->denyAccessUnlessGranted('ROLE_SEARCHER');
         return;
+    }
+
+    /**
+     * @Route("/api/problematic/{id}", name="update_problematic", methods={"PATCH"}, requirements={"id"="\d+"})
+     */
+    public function UpdateProblematicAction(Request $request, $id)
+    {
+        $this->checkRoleAndId($request);
+
+        $problematic = $this->em->getRepository(problematic::class)->find($id);
+        if (null === $problematic)
+            throw new HttpException(404, "Problematic not found.");
+        
+        $current = $this->cr->getCurrentUser($this);
+        if ($current !== $problematic->getOwner())
+            throw new HttpException(401, "You are not the owner.");
+
+        $photos = $problematic->getPhotos();
+        foreach($photos as $photo) {
+            $problematic->removePhoto($photo);
+        }
+        
+        return $this->form->update($request, Problematic::class, array($this, 'updatePhotos'), ['update-problematic'], ['update-problematic'], $id);
     }
 
     /**
@@ -91,12 +137,45 @@ class ProblematicController extends AbstractController
     {
         $problematic = $this->em->getRepository(problematic::class)->find($id);
         if (null === $problematic)
-            throw new HttpException(404, "problematic not found.");
+            throw new HttpException(404, "Problematic not found.");
         $data = $this->serializer->serialize($problematic, 'json', SerializationContext::create()->setGroups(array('list-problematics', 'specific-problematic')));
         $response = new Response($data);
         $response->headers->set('Content-Type', 'application/json');
 
         return $response;
+    }
+
+    /**
+     * @Route("/api/problematic/{id}", name="delete_problematic", methods={"DELETE"}, requirements={"id"="\d+"})
+     */
+    public function DeleteProblematicAction(Request $request, $id)
+    {
+        $this->checkRoleAndId($request);
+
+        $problematic = $this->em->getRepository(problematic::class)->find($id);
+        if (null === $problematic)
+            throw new HttpException(404, "Problematic not found.");
+        $current = $this->cr->getCurrentUser($this);
+        if ($current !== $problematic->getOwner())
+            throw new HttpException(401, "You are not the owner.");
+
+        $photos = $problematic->getPhotos();
+        foreach($photos as $photo) {
+            $problematic->removePhoto($photo);
+        }
+
+        try{
+            $this->em->persist($problematic);
+            $this->em->remove($problematic);
+            $this->em->flush();
+        } catch (\Exception $ex) {
+            throw new HttpException(500, $ex->getMessage());
+        }
+
+        return new JsonResponse([
+            'code' => 200,
+            'message' => "Problematic deleted successfully.",
+        ], 200);
     }
 
     /**

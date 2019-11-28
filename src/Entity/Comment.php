@@ -45,7 +45,7 @@ class Comment
     private $problematic;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\Vote", mappedBy="comment")
+     * @ORM\OneToMany(targetEntity="App\Entity\Vote", mappedBy="comment", orphanRemoval=true)
      */
     private $votes;
 

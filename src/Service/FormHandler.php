@@ -77,4 +77,49 @@ class FormHandler
 			'extras' => $extras
 		], $code);
 	}
+
+	public function update(Request $request, $class, $callBack, $validation_groups, $serializer_groups, $id)
+	{
+		$code = 401;
+		$message = "Unauthorized";
+		$extras = NULL;
+
+		try {
+			$data = json_decode($request->getContent(), true);
+			$data['id'] = $id;
+			$object = $this->serializer->deserialize(json_encode($data), $class, 'json', DeserializationContext::create()->setGroups($serializer_groups));
+
+			if (!is_null($object)) {
+				$violations = $this->validator->validate($object, null, $validation_groups);
+				if (count($violations) !== 0) {
+					foreach ($violations as $violation) {
+						$extras[$violation->getPropertyPath()] = $violation->getMessage();
+					}
+				}
+				else {
+					$showId = $callBack($object);
+
+					$this->entityManager->persist($object);
+					$this->entityManager->flush();
+
+					$code = 201;
+					$message = substr(strrchr($class, "\\"), 1).' updated successfully';
+					if ($showId === True)
+						$extras['id'] = $object->getId();
+				}
+			}
+		}catch (HttpException $ex) {
+			$code = $ex->getStatusCode();
+			$message = $ex->getMessage();
+		}catch (\Exception $ex) {
+			$code = 500;
+			$message = $ex->getMessage();
+		}
+		
+		return new JsonResponse([
+			'code' => $code,
+			'message' => $message,
+			'extras' => $extras
+		], $code);
+	}
 }
