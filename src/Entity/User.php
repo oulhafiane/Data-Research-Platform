@@ -2,6 +2,7 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\ORM\Mapping as ORM;
 use Doctrine\Common\Collections\Collection;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -160,6 +161,23 @@ abstract class User implements UserInterface
 	 * @Assert\Valid(groups={"update-user"})
      */
     private $domains;
+
+    /**
+     * @ORM\ManyToMany(targetEntity="App\Entity\Searcher", inversedBy="followers")
+     */
+    private $follow;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Notification", mappedBy="owner", orphanRemoval=true)
+     * @Serializer\Groups({"notifications"})
+     */
+    private $notifications;
+
+    public function __construct()
+    {
+        $this->follow = new ArrayCollection();
+        $this->notifications = new ArrayCollection();
+    }
 
     /**
      * @ORM\PrePersist
@@ -440,6 +458,63 @@ abstract class User implements UserInterface
     {
         if ($this->domains->contains($domain)) {
             $this->domains->removeElement($domain);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Searcher[]
+     */
+    public function getFollow(): Collection
+    {
+        return $this->follow;
+    }
+
+    public function addFollow(Searcher $follow): self
+    {
+        if (!$this->follow->contains($follow)) {
+            $this->follow[] = $follow;
+        }
+
+        return $this;
+    }
+
+    public function removeFollow(Searcher $follow): self
+    {
+        if ($this->follow->contains($follow)) {
+            $this->follow->removeElement($follow);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Notification[]
+     */
+    public function getNotifications(): Collection
+    {
+        return $this->notifications;
+    }
+
+    public function addNotification(Notification $notification): self
+    {
+        if (!$this->notifications->contains($notification)) {
+            $this->notifications[] = $notification;
+            $notification->setOwner($this);
+        }
+
+        return $this;
+    }
+
+    public function removeNotification(Notification $notification): self
+    {
+        if ($this->notifications->contains($notification)) {
+            $this->notifications->removeElement($notification);
+            // set the owning side to null (unless already changed)
+            if ($notification->getOwner() === $this) {
+                $notification->setOwner(null);
+            }
         }
 
         return $this;

@@ -31,7 +31,7 @@ class FormHandler
 			throw new HttpException(406, 'Field \'id\' not acceptable.');
 	}
 
-	public function validate(Request $request, $class, $callBack, $validation_groups, $serializer_groups)
+	public function validate(Request $request, $class, $callBack, $validation_groups, $serializer_groups, $notificationCallBack = null)
 	{
 		$code = 401;
 		$message = "Unauthorized";
@@ -57,17 +57,19 @@ class FormHandler
 					$message = substr(strrchr($class, "\\"), 1).' created successfully';
 					if ($showId === True)
 						$extras['id'] = $object->getId();
+					if (null !== $notificationCallBack)
+						$notificationCallBack($object);
 				}
 			}
-		}catch (UniqueConstraintViolationException $ex) {
+		} catch (UniqueConstraintViolationException $ex) {
 			$extras['email'] = 'This value is already used.';
-		}catch (\LogicException $ex) {
+		} catch (\LogicException $ex) {
 			$extras['type'] = 'This value should not be blank.';
-		}catch (HttpException $ex) {
+		} catch (HttpException $ex) {
 			$code = $ex->getStatusCode();
 			$message = $ex->getMessage();
-		}catch (\Exception $ex) {
-			$code = 500;
+		} catch (\Exception $ex) {
+			$code = 400;
 			$message = $ex->getMessage();
 		}
 		

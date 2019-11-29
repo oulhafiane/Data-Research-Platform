@@ -28,9 +28,9 @@ security:
             methods: [GET]
             stateless:  true
             anonymous: true
-        public_patch:
+        public_path:
             pattern:    ^/api/public
-            methods: [PATCH]
+            methods: [PATCH, POST]
             stateless:  true
             anonymous: true
         register:
@@ -75,6 +75,6 @@ security:
          - { path: ^/api/register$, roles: IS_AUTHENTICATED_ANONYMOUSLY, methods: [POST] }
          - { path: ^/api/admin, roles: ROLE_ADMIN }
          - { path: ^/api/current, roles: IS_AUTHENTICATED_FULLY }
-         - { path: ^/api/public, roles: IS_AUTHENTICATED_ANONYMOUSLY, methods: [PATCH] }
+         - { path: ^/api/public, roles: IS_AUTHENTICATED_ANONYMOUSLY, methods: [PATCH, POST] }
          - { path: ^/api, roles: IS_AUTHENTICATED_ANONYMOUSLY, methods: [GET] }
          - { path: ^/api, roles: IS_AUTHENTICATED_FULLY }

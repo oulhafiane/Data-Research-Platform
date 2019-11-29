@@ -6,6 +6,7 @@ use App\Service\CurrentUser;
 use App\Service\FormHandler;
 use App\Entity\Problematic;
 use App\Entity\Comment;
+use App\Entity\Notification;
 use App\Entity\Vote;
 use App\Helper\UploadedBase64EncodedFile;
 use App\Helper\Base64EncodedFile;
@@ -87,6 +88,32 @@ class ProblematicController extends AbstractController
         return True;
     }
 
+    private function pushNotifications($users, $type, $reference, $message)
+    {
+        foreach ($users as $user) {
+            $notification = new Notification();
+            $notification->setType($type);
+            $notification->setOwner($user);
+            $notification->setReference($reference);
+            $notification->setMessage($message);
+
+            try {
+                $this->em->persist($notification);
+            } catch (\Exception $ex) {}
+        }
+        try {
+            $this->em->flush();
+        } catch (\Exception $ex) {
+            throw new HttpException(400, $ex->getMessage());
+        }
+    }
+
+    public function notifyFollowers($problematic)
+    {
+        $current = $this->cr->getCurrentUser($this);
+        $this->pushNotifications($current->getFollowers(), 0, $problematic->getId(), $current->getFirstName()." ".$current->getLastName()." has added a new problematic.");
+    }
+
     private function checkRoleAndId(Request $request)
     {
         $data = json_decode($request->getContent(), true);
@@ -127,7 +154,7 @@ class ProblematicController extends AbstractController
     {
         $this->checkRoleAndId($request);
 
-        return $this->form->validate($request, Problematic::class, array($this, 'setOwner'), ['new-problematic'], ['new-problematic']);
+        return $this->form->validate($request, Problematic::class, array($this, 'setOwner'), ['new-problematic'], ['new-problematic'], array($this, 'notifyFollowers'));
     }
 
     /**
@@ -169,7 +196,7 @@ class ProblematicController extends AbstractController
             $this->em->remove($problematic);
             $this->em->flush();
         } catch (\Exception $ex) {
-            throw new HttpException(500, $ex->getMessage());
+            throw new HttpException(400, $ex->getMessage());
         }
 
         return new JsonResponse([
@@ -263,7 +290,7 @@ class ProblematicController extends AbstractController
             $this->em->remove($comment);
             $this->em->flush();
         } catch (\Exception $ex) {
-            throw new HttpException(500, $ex->getMessage());
+            throw new HttpException(400, $ex->getMessage());
         }
 
         return new JsonResponse([
@@ -306,7 +333,7 @@ class ProblematicController extends AbstractController
                 $this->em->flush();
                 $extras['id'] = $comment->getId();
             } catch (\Exception $ex) {
-                throw new HttpException(500, $ex->getMessage());
+                throw new HttpException(400, $ex->getMessage());
             }
             $code = 201;
             $message = "Comment updated successfully";
@@ -352,7 +379,7 @@ class ProblematicController extends AbstractController
                 $this->em->flush();
                 $extras['id'] = $comment->getId();
             } catch (\Exception $ex) {
-                throw new HttpException(500, $ex->getMessage());
+                throw new HttpException(400, $ex->getMessage());
             }
             $code = 201;
             $message = "Comment added successfully";
@@ -377,7 +404,7 @@ class ProblematicController extends AbstractController
                 $code = 202;
                 $message = "Vote deleted successfully";
             } catch (\Exception $ex) {
-                throw new HttpException(500, $ex->getMessage());
+                throw new HttpException(400, $ex->getMessage());
             }
         } else {
             throw new HttpException(404, "Vote not found.");
@@ -460,7 +487,7 @@ class ProblematicController extends AbstractController
                 $code = 201;
                 $message = $successMessage;
             } catch (\Exception $ex) {
-                throw new HttpException(500, $ex->getMessage());
+                throw new HttpException(400, $ex->getMessage());
             }
         }
         
@@ -520,7 +547,7 @@ class ProblematicController extends AbstractController
                 $code = 201;
                 $message = $successMessage;
             } catch (\Exception $ex) {
-                throw new HttpException(500, $ex->getMessage());
+                throw new HttpException(400, $ex->getMessage());
             }
         }
         

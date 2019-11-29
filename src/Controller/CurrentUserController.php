@@ -4,10 +4,12 @@ namespace App\Controller;
 
 use App\Service\CurrentUser;
 use App\Entity\Customer;
+use App\Entity\Notification;
 use App\Entity\SearcherApplications;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\Routing\Annotation\Route;
+use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use JMS\Serializer\SerializerInterface;
@@ -26,6 +28,57 @@ class CurrentUserController extends AbstractController
 		$this->serializer = $serializer;
 		$this->em = $em;
 	}
+
+	/**
+     * @Route("/api/notification/{id}/seen", name="notification_seen", methods={"PATCH"}, requirements={"id"="\d+"})
+     */
+	public function notificationSeenAction($id)
+	{
+		$current = $this->cr->getCurrentUser($this);
+		$notification = $this->em->getRepository(Notification::class)->find($id);
+		if (null === $notification)
+			throw new HttpException(404, "Notification not found.");
+		if ($current !== $notification->getOwner())
+			throw new HttpException(401, "You are not the owner of this notification.");
+		$notification->setSeen(true);
+		try {
+			$this->em->persist($notification);
+			$this->em->flush();
+		} catch (\Exception $ex) {
+			throw new HttpException(400, $ex->getMessage());
+		}
+
+		return new JsonResponse([
+			'code' => 200,
+			'message' => "Notification status changed successfully.",
+		], 201);
+	}
+
+	/**
+     * @Route("/api/current/notifications", name="all_notifications", methods={"GET"})
+     */
+    public function getAllNotificationsAction(Request $request)
+    {
+		$current = $this->cr->getCurrentUser($this);
+        $page = $request->query->get('page', 1);
+        $limit = $request->query->get('limit', 12);
+        $pager = $this->em->getRepository(Notification::class)->findNotifications($page, $limit, $current);
+        $results = $pager->getCurrentPageResults();
+        $nbPages = $pager->getNbPages();
+        $currentPage = $pager->getCurrentPage();
+        $maxPerPage = $pager->getMaxPerPage();
+        $itemsCount = $pager->count();
+        $notifications = array();
+        foreach ($results as $result) {
+            $notifications[] = $result;
+        }
+        $data = array('nbPages' => $nbPages, 'currentPage' => $currentPage, 'maxPerPage' => $maxPerPage, 'itemsCount' => $itemsCount, 'notifications' => $notifications);
+        $data = $this->serializer->serialize($data, 'json', SerializationContext::create()->setGroups(array('notifications')));
+        $response = new Response($data);
+        $response->headers->set('Content-Type', 'application/json');
+
+        return $response;
+    }
 
     /**
      * @Route("/api/current/infos", name="current_user_infos", methods={"GET"})
@@ -48,7 +101,7 @@ class CurrentUserController extends AbstractController
 			$this->em->flush();
 			$extras['id'] = $application->getId();
 		} catch (\Exception $ex) {
-			throw new HttpException(500, $ex->getMessage());
+			throw new HttpException(400, $ex->getMessage());
 		}
 
 		return new JsonResponse([

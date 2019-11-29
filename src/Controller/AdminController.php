@@ -67,7 +67,7 @@ class AdminController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
         $current = $this->cr->getCurrentUser($this);
         if (!($current instanceof Admin)) {
-            throw new HttpException(500, "You are not an admin.");
+            throw new HttpException(400, "You are not an admin.");
         }
 
         $applications = $this->em->getRepository(SearcherApplications::class)->findBy(['status' => null]);
@@ -86,7 +86,7 @@ class AdminController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
         $current = $this->cr->getCurrentUser($this);
         if (!($current instanceof Admin)) {
-            throw new HttpException(500, "You are not an admin.");
+            throw new HttpException(401, "You are not an admin.");
         }
 
         $application = $this->em->getRepository(SearcherApplications::class)->find($id);
@@ -108,7 +108,7 @@ class AdminController extends AbstractController
                 'extras' => NULL
             ], 200);
         } catch (\Exception $ex) {
-            throw new HttpException(500, $ex->getMessage());
+            throw new HttpException(400, $ex->getMessage());
         }
     }
 
@@ -120,7 +120,7 @@ class AdminController extends AbstractController
         $this->denyAccessUnlessGranted('ROLE_ADMIN');
         $current = $this->cr->getCurrentUser($this);
         if (!($current instanceof Admin)) {
-            throw new HttpException(500, "You are not an admin.");
+            throw new HttpException(401, "You are not an admin.");
         }
 
         $application = $this->em->getRepository(SearcherApplications::class)->find($id);
@@ -140,7 +140,7 @@ class AdminController extends AbstractController
                 'extras' => NULL
             ], 200);
         } catch (\Exception $ex) {
-            throw new HttpException(500, $ex->getMessage());
+            throw new HttpException(400, $ex->getMessage());
         }
     }
 }

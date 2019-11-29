@@ -47,7 +47,7 @@ class UpdateUserController extends AbstractController
         else if ($current instanceof Admin)
             $data['type'] = "admin";
         else
-            throw new HttpException(500, 'Cannot found type of user.');
+            throw new HttpException(400, 'Cannot found type of user.');
 
         return json_encode($data);
     }
@@ -117,7 +117,7 @@ class UpdateUserController extends AbstractController
                 $code = $ex->getStatusCode();
                 $message = $ex->getMessage();
             } catch (\Exception $ex) {
-                $code = 500;
+                $code = 400;
                 $message = $ex->getMessage();
             }
         }

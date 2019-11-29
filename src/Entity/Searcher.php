@@ -26,12 +26,18 @@ class Searcher extends User
      */
     private $comments;
 
+    /**
+     * @ORM\ManyToMany(targetEntity="App\Entity\User", mappedBy="follow")
+     */
+    private $followers;
+
     public function __construct()
     {
         $this->problematics = new ArrayCollection();
         $this->votes = new ArrayCollection();
         $this->comments = new ArrayCollection();
         $this->domains = new ArrayCollection();
+        $this->followers = new ArrayCollection();
     }
 
     /**
@@ -122,6 +128,34 @@ class Searcher extends User
             if ($comment->getOwner() === $this) {
                 $comment->setOwner(null);
             }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|User[]
+     */
+    public function getFollowers(): Collection
+    {
+        return $this->followers;
+    }
+
+    public function addFollower(User $follower): self
+    {
+        if (!$this->followers->contains($follower)) {
+            $this->followers[] = $follower;
+            $follower->addFollow($this);
+        }
+
+        return $this;
+    }
+
+    public function removeFollower(User $follower): self
+    {
+        if ($this->followers->contains($follower)) {
+            $this->followers->removeElement($follower);
+            $follower->removeFollow($this);
         }
 
         return $this;
