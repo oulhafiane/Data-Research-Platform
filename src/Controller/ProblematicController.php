@@ -68,9 +68,9 @@ class ProblematicController extends AbstractController
     public function updatePhotos($problematic)
     {
         $photos = $problematic->getPhotos();
-        if (null === $photos)
+        if (null === $photos || null === $photos[0])
             return True;
-        if (null === $photos[0]->getId());
+        if (null !== $photos[0]->getId())
             return True;
         foreach ($photos as $photo) {
             $file = new UploadedBase64EncodedFile(new Base64EncodedFile($photo->getFile()));
