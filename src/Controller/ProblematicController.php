@@ -70,6 +70,8 @@ class ProblematicController extends AbstractController
         $photos = $problematic->getPhotos();
         if (null === $photos)
             return True;
+        if (null === $photos[0]->getId());
+            return True;
         foreach ($photos as $photo) {
             $file = new UploadedBase64EncodedFile(new Base64EncodedFile($photo->getFile()));
             $photo->setFile($file);
