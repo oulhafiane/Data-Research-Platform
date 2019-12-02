@@ -422,16 +422,17 @@ class ProblematicController extends AbstractController
     }
 
     /**
-     * @Route("/api/problematic/{id}/comment", name="all_problematic_comments", methods={"GET"}, requirements={"id"="\d+"})
+     * @Route("/api/problematic/{id}/comment", name="all_problematic_comments", methods={"PATCH", "GET"}, requirements={"id"="\d+"})
      */
     public function getAllProblematicCommentsAction(Request $request, $id)
     {
+        $current = $this->cr->getCurrentUser($this);
         $page = $request->query->get('page', 1);
         $limit = $request->query->get('limit', 10);
         $problematic = $this->em->getRepository(Problematic::class)->find($id);
         if (null === $problematic)
             throw new HttpException(404, "Problematic not found.");
-        $pager = $this->em->getRepository(Comment::class)->findComments($page, $limit, $problematic);
+        $pager = $this->em->getRepository(Comment::class)->findComments($page, $limit, $problematic, $current);
         $results = $pager->getCurrentPageResults();
         $nbPages = $pager->getNbPages();
         $currentPage = $pager->getCurrentPage();

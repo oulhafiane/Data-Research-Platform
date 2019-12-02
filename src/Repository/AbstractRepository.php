@@ -92,13 +92,15 @@ abstract class AbstractRepository extends ServiceEntityRepository
 		return $this->paginate($qb, $limit, $page);
 	}
 
-	public function findComments($page = 1, $limit = 10, $problematic)
+	public function findComments($page = 1, $limit = 10, $problematic, $me)
 	{
 		$qb = $this->createQueryBuilder('s')
 			->select('s')
 			->addSelect('(SELECT COALESCE(SUM(v.good) - (COUNT(v.good) - SUM(v.good)),0)
 				   FROM \App\Entity\Vote v
-				   WHERE v.comment = s.id) as votes');
+				   WHERE v.comment = s.id) as votes')
+			->addSelect('(SELECT vo.good FROM \App\Entity\Comment c join \App\Entity\Vote vo WITH vo.comment=c where vo.comment = s.id AND vo.voter = :me) as iAmVoter')
+			->setParameter('me', $me);
 
 		$qb->where('s.problematic = ?1')
 				->setParameter(1, $problematic)
