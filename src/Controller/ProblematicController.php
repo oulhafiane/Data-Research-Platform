@@ -431,12 +431,18 @@ class ProblematicController extends AbstractController
         $problematic = $this->em->getRepository(Problematic::class)->find($id);
         if (null === $problematic)
             throw new HttpException(404, "Problematic not found.");
-        $results = $this->em->getRepository(Comment::class)->findComments($page, $limit, $problematic)->getCurrentPageResults();
+        $pager = $this->em->getRepository(Comment::class)->findComments($page, $limit, $problematic);
+        $results = $pager->getCurrentPageResults();
+        $nbPages = $pager->getNbPages();
+        $currentPage = $pager->getCurrentPage();
+        $maxPerPage = $pager->getMaxPerPage();
+        $itemsCount = $pager->count();
         $comments = array();
         foreach ($results as $result) {
             $comments[] = $result;
         }
-        $data = $this->serializer->serialize($comments, 'json', SerializationContext::create()->setGroups(array('list-comments')));
+        $data = array('nbPages' => $nbPages, 'currentPage' => $currentPage, 'maxPerPage' => $maxPerPage, 'itemsCount' => $itemsCount, 'comments' => $comments);
+        $data = $this->serializer->serialize($data, 'json', SerializationContext::create()->setGroups(array('list-comments')));
         $response = new Response($data);
         $response->headers->set('Content-Type', 'application/json');
 
