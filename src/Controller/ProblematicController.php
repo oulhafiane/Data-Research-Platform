@@ -139,9 +139,12 @@ class ProblematicController extends AbstractController
         if ($current !== $problematic->getOwner())
             throw new HttpException(401, "You are not the owner.");
 
-        $photos = $problematic->getPhotos();
-        foreach($photos as $photo) {
-            $problematic->removePhoto($photo);
+        $data = json_decode($request->getContent(), true);
+        if (array_key_exists("photos", $data)) {
+            $photos = $problematic->getPhotos();
+            foreach($photos as $photo) {
+                $problematic->removePhoto($photo);
+            }
         }
         
         return $this->form->update($request, Problematic::class, array($this, 'updatePhotos'), ['update-problematic'], ['update-problematic'], $id);
