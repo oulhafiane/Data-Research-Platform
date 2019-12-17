@@ -24,6 +24,7 @@ class DataSet
     /**
      * @ORM\Column(type="uuid", unique=true)
      * @Serializer\ReadOnly
+     * @Serializer\Type("string")
      * @Serializer\Groups({"new-dataset", "my-dataset"})
      */
     private $uuid;

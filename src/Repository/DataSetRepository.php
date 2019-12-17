@@ -3,7 +3,6 @@
 namespace App\Repository;
 
 use App\Entity\DataSet;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Common\Persistence\ManagerRegistry;
 
 /**
@@ -12,7 +11,7 @@ use Doctrine\Common\Persistence\ManagerRegistry;
  * @method DataSet[]    findAll()
  * @method DataSet[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
-class DataSetRepository extends ServiceEntityRepository
+class DataSetRepository extends AbstractRepository
 {
     public function __construct(ManagerRegistry $registry)
     {

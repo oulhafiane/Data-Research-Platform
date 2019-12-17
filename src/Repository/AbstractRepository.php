@@ -109,6 +109,17 @@ abstract class AbstractRepository extends ServiceEntityRepository
 		return $this->paginate($qb, $limit, $page);
 	}
 
+	public function findMyDataSets($page = 1, $limit = 10, $owner)
+	{
+		$qb = $this->createQueryBuilder('s')
+			->select('s');
+
+		$qb->where('s.owner = ?1')
+				->setParameter(1, $owner)
+				->addOrderBy('s.creationDate', 'DESC');
+		return $this->paginate($qb, $limit, $page);
+	}
+
 	public function findNotifications($page = 1, $limit = 10, $owner)
 	{
 		$qb = $this->createQueryBuilder('s')
