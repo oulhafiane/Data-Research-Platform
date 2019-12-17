@@ -31,6 +31,11 @@ class Searcher extends User
      */
     private $followers;
 
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\DataSet", mappedBy="owner")
+     */
+    private $dataSets;
+
     public function __construct()
     {
         $this->problematics = new ArrayCollection();
@@ -38,6 +43,7 @@ class Searcher extends User
         $this->comments = new ArrayCollection();
         $this->domains = new ArrayCollection();
         $this->followers = new ArrayCollection();
+        $this->dataSets = new ArrayCollection();
     }
 
     /**
@@ -156,6 +162,37 @@ class Searcher extends User
         if ($this->followers->contains($follower)) {
             $this->followers->removeElement($follower);
             $follower->removeFollow($this);
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|DataSet[]
+     */
+    public function getDataSets(): Collection
+    {
+        return $this->dataSets;
+    }
+
+    public function addDataSet(DataSet $dataSet): self
+    {
+        if (!$this->dataSets->contains($dataSet)) {
+            $this->dataSets[] = $dataSet;
+            $dataSet->setOwner($this);
+        }
+
+        return $this;
+    }
+
+    public function removeDataSet(DataSet $dataSet): self
+    {
+        if ($this->dataSets->contains($dataSet)) {
+            $this->dataSets->removeElement($dataSet);
+            // set the owning side to null (unless already changed)
+            if ($dataSet->getOwner() === $this) {
+                $dataSet->setOwner(null);
+            }
         }
 
         return $this;

@@ -57,6 +57,8 @@ class FormHandler
 					$message = substr(strrchr($class, "\\"), 1).' created successfully';
 					if ($showId === True)
 						$extras['id'] = $object->getId();
+					else if (null !== $showId && !is_bool($showId))
+						$extras['uuid'] = $showId;
 					if (null !== $notificationCallBack)
 						$notificationCallBack($object);
 				}
