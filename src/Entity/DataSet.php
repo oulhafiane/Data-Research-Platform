@@ -2,6 +2,8 @@
 
 namespace App\Entity;
 
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Validator\Constraints AS Assert;
 use JMS\Serializer\Annotation as Serializer;
@@ -43,7 +45,6 @@ class DataSet
 
     /**
      * @ORM\Column(type="text", nullable=true)
-     * @Assert\NotBlank(groups={"new-dataset", "update-dataset"})
 	 * @Serializer\Groups({"new-dataset", "update-dataset", "my-dataset"})
      */
     private $description;
@@ -69,6 +70,24 @@ class DataSet
      * @ORM\JoinColumn(nullable=false)
      */
     private $owner;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\Part", mappedBy="dataSet")
+     * @Serializer\Groups({"my-dataset"})
+     */
+    private $parts;
+
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\TableT", mappedBy="dataSet")
+     * @Serializer\Groups({"my-dataset"})
+     */
+    private $tables;
+
+    public function __construct()
+    {
+        $this->tables = new ArrayCollection();
+        $this->parts = new ArrayCollection();
+    }
 
     /**
      * @ORM\PrePersist
@@ -144,6 +163,68 @@ class DataSet
     public function setOwner(?Searcher $owner): self
     {
         $this->owner = $owner;
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|Part[]
+     */
+    public function getParts(): Collection
+    {
+        return $this->parts;
+    }
+
+    public function addPart(Part $part): self
+    {
+        if (!$this->parts->contains($part)) {
+            $this->parts[] = $part;
+            $part->setDataSet($this);
+        }
+
+        return $this;
+    }
+
+    public function removePart(Part $part): self
+    {
+        if ($this->parts->contains($part)) {
+            $this->parts->removeElement($part);
+            // set the owning side to null (unless already changed)
+            if ($part->getDataSet() === $this) {
+                $part->setDataSet(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|TableT[]
+     */
+    public function getTables(): Collection
+    {
+        return $this->tables;
+    }
+
+    public function addTable(TableT $table): self
+    {
+        if (!$this->tables->contains($table)) {
+            $this->tables[] = $table;
+            $table->setDataSet($this);
+        }
+
+        return $this;
+    }
+
+    public function removeTable(TableT $table): self
+    {
+        if ($this->tables->contains($table)) {
+            $this->tables->removeElement($table);
+            // set the owning side to null (unless already changed)
+            if ($table->getDataSet() === $this) {
+                $table->setDataSet(null);
+            }
+        }
 
         return $this;
     }

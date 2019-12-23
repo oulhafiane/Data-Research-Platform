@@ -3,6 +3,8 @@
 namespace App\Controller;
 
 use App\Entity\DataSet;
+use App\Entity\Part;
+use App\Entity\TableT;
 use App\Service\CurrentUser;
 use App\Service\FormHandler;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -64,6 +66,34 @@ class DataSetController extends AbstractController
         }
     }
 
+    public function addVariables($table)
+    {
+        $variables = $table->getVariables();
+        foreach($variables as $variable) {
+            $violations = $this->validator->validate($variable, null, ['add-variables']);
+            $message = '';
+            foreach ($violations as $violation) {
+                $message .= $violation->getPropertyPath() . ': ' . $violation->getMessage() . ' ';
+            }
+            if (count($violations) !== 0)
+                throw new HttpException(406, $message);
+
+            $variable->setTableT($table);
+            try {
+                $this->em->persist($variable);
+            } catch (\Exception $ex) {
+                throw new HttpException(400, $ex->getMessage());
+            }
+        }
+        return false;
+    }
+
+    public function setDataSetToObject($object, $dataset)
+    {
+        $object->setDataSet($dataset);
+        return true;
+    }
+    
     public function doNothing($object)
     {
         return false;
@@ -131,12 +161,70 @@ class DataSetController extends AbstractController
     }
     
     /**
-     * @Route("/api/current/dataset", name="create_data_set", methods={"POST"})
+     * @Route("/api/current/dataset", name="create_dataset", methods={"POST"})
      */
     public function createDataSetAction(Request $request)
     {
         $this->checkRoleAndId($request);
 
         return $this->form->validate($request, DataSet::class, array($this, 'setOwner'), ['new-dataset'], ['new-dataset']);
+    }
+
+    /**
+     * @Route("/api/current/dataset/{uuid}/table", name="add_table_dataset", methods={"POST"}, requirements={"uuid"="[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}"})
+     */
+    public function addTableToDataSetAction(Request $request, $uuid)
+    {
+        $this->checkRoleAndId($request);
+
+        $dataset = $this->em->getRepository(DataSet::class)->findOneBy(['uuid' => $uuid]);
+        if (null === $dataset)
+            throw new HttpException(404, "Dataset not found.");
+        
+        $current = $this->cr->getCurrentUser($this);
+        if ($current !== $dataset->getOwner())
+            throw new HttpException(401, "You are not the owner.");
+        
+        return $this->form->validate($request, TableT::class, array($this, 'setDataSetToObject'), ['new-table'], ['new-table'], null, $dataset);
+    }
+
+    /**
+     * @Route("/api/current/dataset/{uuid}/part", name="add_part_dataset", methods={"POST"}, requirements={"uuid"="[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}"})
+     */
+    public function addPartToDataSetAction(Request $request, $uuid)
+    {
+        $this->checkRoleAndId($request);
+
+        $dataset = $this->em->getRepository(DataSet::class)->findOneBy(['uuid' => $uuid]);
+        if (null === $dataset)
+            throw new HttpException(404, "Dataset not found.");
+        
+        $current = $this->cr->getCurrentUser($this);
+        if ($current !== $dataset->getOwner())
+            throw new HttpException(401, "You are not the owner.");
+
+        return $this->form->validate($request, Part::class, array($this, 'setDataSetToObject'), ['new-part'], ['new-part'], null, $dataset);
+    }
+
+    /**
+     * @Route("/api/current/dataset/{uuid}/table/{id}", name="add_variables_dataset", methods={"POST"}, requirements={"id"="\d+", "uuid"="[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}"})
+     */
+    public function addVariablesAction(Request $request, $uuid, $id)
+    {
+        $this->checkRoleAndId($request);
+
+        $dataset = $this->em->getRepository(DataSet::class)->findOneBy(['uuid' => $uuid]);
+        if (null === $dataset)
+            throw new HttpException(404, "Dataset not found.");
+        
+        $current = $this->cr->getCurrentUser($this);
+        if ($current !== $dataset->getOwner())
+            throw new HttpException(401, "You are not the owner.");
+
+        $part = $this->em->getRepository(TableT::class)->findOneBy(['id' => $id, 'dataSet' => $dataset->getId()]);
+        if (null === $part)
+            throw new HttpException(404, "Table of dataset not found.");
+
+        return $this->form->update($request, TableT::class, array($this, 'addVariables'), ['add-variables'], ['add-variables'], $part->getId());
     }
 }

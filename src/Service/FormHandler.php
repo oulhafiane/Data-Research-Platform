@@ -31,7 +31,7 @@ class FormHandler
 			throw new HttpException(406, 'Field \'id\' not acceptable.');
 	}
 
-	public function validate(Request $request, $class, $callBack, $validation_groups, $serializer_groups, $notificationCallBack = null)
+	public function validate(Request $request, $class, $callBack, $validation_groups, $serializer_groups, $notificationCallBack = null, $callBackParameters = null)
 	{
 		$code = 401;
 		$message = "Unauthorized";
@@ -48,7 +48,10 @@ class FormHandler
 					}
 				}
 				else {
-					$showId = $callBack($object);
+					if (null === $callBackParameters)
+						$showId = $callBack($object);
+					else
+						$showId = $callBack($object, $callBackParameters);
 
 					$this->entityManager->persist($object);
 					$this->entityManager->flush();
@@ -88,7 +91,7 @@ class FormHandler
 		$message = "Unauthorized";
 		$extras = NULL;
 
-		try {
+		// try {
 			$data = json_decode($request->getContent(), true);
 			$data['id'] = $id;
 			$object = $this->serializer->deserialize(json_encode($data), $class, 'json', DeserializationContext::create()->setGroups($serializer_groups));
@@ -112,13 +115,13 @@ class FormHandler
 						$extras['id'] = $object->getId();
 				}
 			}
-		}catch (HttpException $ex) {
-			$code = $ex->getStatusCode();
-			$message = $ex->getMessage();
-		}catch (\Exception $ex) {
-			$code = 500;
-			$message = $ex->getMessage();
-		}
+		// }catch (HttpException $ex) {
+		// 	$code = $ex->getStatusCode();
+		// 	$message = $ex->getMessage();
+		// }catch (\Exception $ex) {
+		// 	$code = 500;
+		// 	$message = $ex->getMessage();
+		// }
 		
 		return new JsonResponse([
 			'code' => $code,
