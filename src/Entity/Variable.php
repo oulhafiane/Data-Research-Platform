@@ -64,12 +64,6 @@ class Variable
      */
     private $part;
 
-    /**
-     * @ORM\ManyToOne(targetEntity="App\Entity\TableT", inversedBy="variables")
-     * @ORM\JoinColumn(nullable=false)
-     */
-    private $tableT;
-
     public function getId(): ?int
     {
         return $this->id;
@@ -131,18 +125,6 @@ class Variable
     public function setPart(?Part $part): self
     {
         $this->part = $part;
-
-        return $this;
-    }
-
-    public function getTableT(): ?TableT
-    {
-        return $this->tableT;
-    }
-
-    public function setTableT(?TableT $tableT): self
-    {
-        $this->tableT = $tableT;
 
         return $this;
     }

@@ -91,7 +91,7 @@ class FormHandler
 		$message = "Unauthorized";
 		$extras = NULL;
 
-		// try {
+		try {
 			$data = json_decode($request->getContent(), true);
 			$data['id'] = $id;
 			$object = $this->serializer->deserialize(json_encode($data), $class, 'json', DeserializationContext::create()->setGroups($serializer_groups));
@@ -115,13 +115,13 @@ class FormHandler
 						$extras['id'] = $object->getId();
 				}
 			}
-		// }catch (HttpException $ex) {
-		// 	$code = $ex->getStatusCode();
-		// 	$message = $ex->getMessage();
-		// }catch (\Exception $ex) {
-		// 	$code = 500;
-		// 	$message = $ex->getMessage();
-		// }
+		}catch (HttpException $ex) {
+			$code = $ex->getStatusCode();
+			$message = $ex->getMessage();
+		}catch (\Exception $ex) {
+			$code = 500;
+			$message = $ex->getMessage();
+		}
 		
 		return new JsonResponse([
 			'code' => $code,

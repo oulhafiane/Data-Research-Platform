@@ -49,6 +49,7 @@ class Part
 
     /**
      * @ORM\OneToMany(targetEntity="App\Entity\Variable", mappedBy="part")
+     * @Serializer\Groups({"add-variables", "my-dataset"})
      */
     private $variables;
 
