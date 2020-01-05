@@ -102,7 +102,7 @@ class Part
     /**
      * @return Collection|Variable[]
      */
-    public function getVariables(): Collection
+    public function getVariables(): ?Collection
     {
         return $this->variables;
     }

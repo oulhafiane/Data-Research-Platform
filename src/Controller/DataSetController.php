@@ -68,6 +68,7 @@ class DataSetController extends AbstractController
     public function addVariables($part)
     {
         $variables = $part->getVariables();
+        if (null === $variables) return false;
         foreach($variables as $variable) {
             $violations = $this->validator->validate($variable, null, ['add-variables']);
             $message = '';
