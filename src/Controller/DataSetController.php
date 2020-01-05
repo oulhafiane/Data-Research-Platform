@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\DataSet;
 use App\Entity\Part;
+use App\Entity\Variable;
 use App\Service\CurrentUser;
 use App\Service\FormHandler;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -231,5 +232,67 @@ class DataSetController extends AbstractController
             throw new HttpException(404, "Part of dataset not found.");
 
         return $this->form->update($request, Part::class, array($this, 'addVariables'), ['add-variables'], ['add-variables'], $part->getId());
+    }
+
+    /**
+     * @Route("/api/current/dataset/{uuid}/part/{id}/variable/{idVar}", name="edit_variable_dataset", methods={"PATCH"}, requirements={"id"="\d+", "idVar"="\d+", "uuid"="[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}"})
+     */
+    public function editVariableAction(Request $request, $uuid, $id, $idVar)
+    {
+        $this->checkRoleAndId($request);
+
+        $dataset = $this->em->getRepository(DataSet::class)->findOneBy(['uuid' => $uuid]);
+        if (null === $dataset)
+            throw new HttpException(404, "Dataset not found.");
+        
+        $current = $this->cr->getCurrentUser($this);
+        if ($current !== $dataset->getOwner())
+            throw new HttpException(401, "You are not the owner.");
+
+        $part = $this->em->getRepository(Part::class)->findOneBy(['id' => $id, 'dataSet' => $dataset->getId()]);
+        if (null === $part)
+            throw new HttpException(404, "Part of dataset not found.");
+
+        $variable = $this->em->getRepository(Variable::class)->findOneBy(['id' => $idVar, 'part' => $part->getId()]);
+        if (null === $variable)
+            throw new HttpException(404, "Variable not found.");
+
+        return $this->form->update($request, Variable::class, array($this, 'doNothing'), ['update-variable'], ['update-variable'], $variable->getId());
+    }
+
+    /**
+     * @Route("/api/current/dataset/{uuid}/part/{id}/variable/{idVar}", name="delete_variable_dataset", methods={"DELETE"}, requirements={"id"="\d+", "idVar"="\d+", "uuid"="[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}"})
+     */
+    public function deleteVariableAction(Request $request, $uuid, $id, $idVar)
+    {
+        $this->checkRoleAndId($request);
+
+        $dataset = $this->em->getRepository(DataSet::class)->findOneBy(['uuid' => $uuid]);
+        if (null === $dataset)
+            throw new HttpException(404, "Dataset not found.");
+        
+        $current = $this->cr->getCurrentUser($this);
+        if ($current !== $dataset->getOwner())
+            throw new HttpException(401, "You are not the owner.");
+
+        $part = $this->em->getRepository(Part::class)->findOneBy(['id' => $id, 'dataSet' => $dataset->getId()]);
+        if (null === $part)
+            throw new HttpException(404, "Part of dataset not found.");
+
+        $variable = $this->em->getRepository(Variable::class)->findOneBy(['id' => $idVar, 'part' => $part->getId()]);
+        if (null === $variable)
+            throw new HttpException(404, "Variable not found.");
+
+        try{
+            $this->em->remove($variable);
+            $this->em->flush();
+        } catch (\Exception $ex) {
+            throw new HttpException(400, $ex->getMessage());
+        }
+
+        return new JsonResponse([
+            'code' => 200,
+            'message' => "Variable deleted successfully.",
+        ], 200);
     }
 }

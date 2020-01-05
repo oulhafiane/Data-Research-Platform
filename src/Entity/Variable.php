@@ -16,6 +16,7 @@ class Variable
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
      * @Serializer\ReadOnly
+     * @Serializer\Groups({"my-dataset"})
      * @Assert\IsNull(groups={"add-variables"})
      */
     private $id;
@@ -28,7 +29,7 @@ class Variable
      *	max = 100,
      *	groups={"add-variables"}
      * )
-     * @Serializer\Groups({"my-dataset", "new-part", "add-variables", "my-dataset"})
+     * @Serializer\Groups({"my-dataset", "new-part", "add-variables", "update-variable"})
      */
     private $name;
 
@@ -40,7 +41,7 @@ class Variable
      *	max = 255,
      *	groups={"add-variables"}
      * )
-     * @Serializer\Groups({"my-dataset", "new-part", "add-variables", "my-dataset"})
+     * @Serializer\Groups({"my-dataset", "new-part", "add-variables", "my-dataset", "update-variable"})
      */
     private $question;
 
