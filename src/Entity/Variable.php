@@ -28,7 +28,7 @@ class Variable
      *	max = 100,
      *	groups={"add-variables"}
      * )
-     * @Serializer\Groups({"my-dataset", "add-variables", "my-dataset"})
+     * @Serializer\Groups({"my-dataset", "new-part", "add-variables", "my-dataset"})
      */
     private $name;
 
@@ -40,7 +40,7 @@ class Variable
      *	max = 255,
      *	groups={"add-variables"}
      * )
-     * @Serializer\Groups({"my-dataset", "add-variables", "my-dataset"})
+     * @Serializer\Groups({"my-dataset", "new-part", "add-variables", "my-dataset"})
      */
     private $question;
 
@@ -48,14 +48,14 @@ class Variable
      * @ORM\Column(type="smallint")
      * @Assert\NotBlank(groups={"add-variables"})
      * @Assert\Type(type="integer", groups={"add-variables"})
-	 * @Serializer\Groups({"my-dataset", "add-variables", "my-dataset"})
+	 * @Serializer\Groups({"my-dataset", "new-part", "add-variables", "my-dataset"})
      */
     private $type;
 
     /**
      * @ORM\Column(type="array", nullable=true)
      * @Serializer\Type("array")
-     * @Serializer\Groups({"my-dataset", "add-variables", "my-dataset"})
+     * @Serializer\Groups({"my-dataset", "new-part", "add-variables", "my-dataset"})
      */
     private $options = [];
 

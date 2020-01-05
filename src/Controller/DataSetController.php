@@ -90,6 +90,7 @@ class DataSetController extends AbstractController
     public function setDataSetToObject($object, $dataset)
     {
         $object->setDataSet($dataset);
+        $this->addVariables($object);
         return true;
     }
     
