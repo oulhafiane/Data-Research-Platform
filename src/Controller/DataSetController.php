@@ -189,6 +189,28 @@ class DataSetController extends AbstractController
     }
 
     /**
+     * @Route("/api/current/dataset/{uuid}/part/{id}", name="update_part_dataset", methods={"PATCH"}, requirements={"id"="\d+", "uuid"="[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}"})
+     */
+    public function updatePartToDataSetAction(Request $request, $uuid, $id)
+    {
+        $this->checkRoleAndId($request);
+
+        $dataset = $this->em->getRepository(DataSet::class)->findOneBy(['uuid' => $uuid]);
+        if (null === $dataset)
+            throw new HttpException(404, "Dataset not found.");
+        
+        $current = $this->cr->getCurrentUser($this);
+        if ($current !== $dataset->getOwner())
+            throw new HttpException(401, "You are not the owner.");
+
+        $part = $this->em->getRepository(Part::class)->findOneBy(['id' => $id, 'dataSet' => $dataset->getId()]);
+        if (null === $part)
+            throw new HttpException(404, "Part of dataset not found.");
+
+        return $this->form->update($request, Part::class, array($this, 'doNothing'), ['update-part'], ['update-part'], $part->getId());
+    }
+
+    /**
      * @Route("/api/current/dataset/{uuid}/part/{id}", name="add_variables_dataset", methods={"POST"}, requirements={"id"="\d+", "uuid"="[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}"})
      */
     public function addVariablesAction(Request $request, $uuid, $id)
