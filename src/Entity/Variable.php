@@ -37,7 +37,7 @@ class Variable
      * @ORM\Column(type="string", length=255, nullable=true)
      * @Assert\NotBlank(groups={"add-variables"})
      * @Assert\Length(
-     *	min = 10,
+     *	min = 3,
      *	max = 255,
      *	groups={"add-variables"}
      * )
