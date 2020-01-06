@@ -10,6 +10,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\DBAL\Exception\UniqueConstraintViolationException;
 use JMS\Serializer\SerializerInterface;
 use JMS\Serializer\DeserializationContext;
+use JMS\Serializer\SerializationContext;
 
 class FormHandler
 {
@@ -113,6 +114,8 @@ class FormHandler
 					$message = substr(strrchr($class, "\\"), 1).' updated successfully';
 					if ($showId === True)
 						$extras['id'] = $object->getId();
+					else if (null !== $showId && !is_bool($showId))
+						$extras = json_decode($this->serializer->serialize($object, 'json', SerializationContext::create()->setGroups(array($showId))), true);
 				}
 			}
 		}catch (HttpException $ex) {

@@ -86,7 +86,7 @@ class DataSetController extends AbstractController
                 throw new HttpException(400, $ex->getMessage());
             }
         }
-        return false;
+        return 'my-dataset';
     }
 
     public function setDataSetToObject($object, $dataset)
