@@ -12,18 +12,21 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use Lexik\Bundle\JWTAuthenticationBundle\Services\JWTTokenManagerInterface;
+use Lexik\Bundle\JWTAuthenticationBundle\Security\Http\Authentication\AuthenticationSuccessHandler;
 
 class TokenController extends AbstractController
 {
     private $em;
     private $JWTManager;
     private $encoder;
+    private $authenticationSuccessHandler;
 
-    public function __construct(UserPasswordEncoderInterface $encoder, EntityManagerInterface $em, JWTTokenManagerInterface $JWTManager)
+    public function __construct(UserPasswordEncoderInterface $encoder, EntityManagerInterface $em, JWTTokenManagerInterface $JWTManager, AuthenticationSuccessHandler $authenticationSuccessHandler)
     {
         $this->em = $em;
         $this->JWTManager = $JWTManager;
         $this->encoder = $encoder;
+        $this->authenticationSuccessHandler = $authenticationSuccessHandler;
     }
 
     /**
@@ -42,8 +45,6 @@ class TokenController extends AbstractController
         $client = new \Google_Client(['client_id' => $this->getParameter('google_id')]);
         $payload = $client->verifyIdToken($data['token']);
         if ($payload) {
-            // var_dump($payload);
-            // $userid = $payload['sub'];
             $user = $this->em->getRepository(User::class)->findOneBy(['email' => $payload['email']]);
             if (null === $user) {
                 $user = new Searcher();
@@ -64,12 +65,8 @@ class TokenController extends AbstractController
                     throw new HttpException(400, $ex->getMessage());
                 }
             }
-            $now = time();
-            return new JsonResponse([
-                'token' => $this->JWTManager->create($user)
-            ], 200);
-            // If request specified a G Suite domain:
-            //$domain = $payload['hd'];
+            $jwt = $this->JWTManager->create($user);
+            return $this->authenticationSuccessHandler->handleAuthenticationSuccess($user, $jwt);
         }
 
         return new JsonResponse([
