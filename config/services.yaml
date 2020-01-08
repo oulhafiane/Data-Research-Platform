@@ -7,6 +7,7 @@ parameters:
     uploads_base_url: 'https://%env(AWS_S3_BUCKET_NAME)%.s3.%env(AWS_S3_REGION_ID)%.amazonaws.com'
     locale: 'en'
     datasets_location: '%env(DATASETS_LOCATION)%'
+    google_id: '%env(GOOGLE_ID)%'
 
 services:
     # default configuration for services in *this* file
