@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\DataSet;
+use App\Entity\SurveyToken;
 use App\Entity\Part;
 use App\Entity\Variable;
 use App\Service\CurrentUser;
@@ -19,6 +20,7 @@ use Doctrine\ORM\EntityManagerInterface;
 use JMS\Serializer\SerializerInterface;
 use JMS\Serializer\SerializationContext;
 use Ramsey\Uuid\Uuid;
+use Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface;
 
 class DataSetController extends AbstractController
 {    
@@ -28,14 +30,16 @@ class DataSetController extends AbstractController
     private $form;
     private $em;
     private $serializer;
+    private $JWTencoder;
 
-    public function __construct(ValidatorInterface $validator, CurrentUser $cr, FormHandler $form, EntityManagerInterface $em, SerializerInterface $serializer)
+    public function __construct(ValidatorInterface $validator, CurrentUser $cr, FormHandler $form, EntityManagerInterface $em, SerializerInterface $serializer, JWTEncoderInterface $JWTencoder)
     {
         $this->validator = $validator;
         $this->cr = $cr;
         $this->form = $form;
         $this->em = $em;
         $this->serializer = $serializer;
+        $this->JWTencoder = $JWTencoder;
     }
     
     private function checkRoleAndId(Request $request)
@@ -45,7 +49,7 @@ class DataSetController extends AbstractController
             throw $this->createAccessDeniedException();
 
         $this->denyAccessUnlessGranted('ROLE_SEARCHER');
-        return;
+        return $data;
     }
 
     public function setOwner($dataset)
@@ -170,6 +174,87 @@ class DataSetController extends AbstractController
         $this->checkRoleAndId($request);
 
         return $this->form->validate($request, DataSet::class, array($this, 'setOwner'), ['new-dataset'], ['new-dataset']);
+    }
+
+    /**
+     * @Route("/api/current/dataset/{uuid}/token", name="get_tokens_dataset", methods={"GET"}, requirements={"uuid"="[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}"})
+     */
+    public function getTokensDataSetAction(Request $request, $uuid)
+    {
+        $page = $request->query->get('page', 1);
+        $limit = $request->query->get('limit', 20);
+
+        $dataset = $this->em->getRepository(DataSet::class)->findOneBy(['uuid' => $uuid]);
+        if (null === $dataset)
+            throw new HttpException(404, "Dataset not found.");
+        
+        $current = $this->cr->getCurrentUser($this);
+        if ($current !== $dataset->getOwner())
+            throw new HttpException(401, "You are not the owner.");
+
+        $pager = $this->em->getRepository(SurveyToken::class)->findTokensOfDataset($page, $limit, $dataset);
+        $results = $pager->getCurrentPageResults();
+        $nbPages = $pager->getNbPages();
+        $currentPage = $pager->getCurrentPage();
+        $maxPerPage = $pager->getMaxPerPage();
+        $itemsCount = $pager->count();
+        $tokens = array();
+        foreach ($results as $result) {
+            $tokens[] = $result;
+        }
+        $data = array('nbPages' => $nbPages, 'currentPage' => $currentPage, 'maxPerPage' => $maxPerPage, 'itemsCount' => $itemsCount, 'tokens' => $tokens);
+        $data = $this->serializer->serialize($data, 'json', SerializationContext::create()->setGroups(array('tokens')));
+        $response = new Response($data);
+        $response->headers->set('Content-Type', 'application/json');
+
+        return $response;
+    }
+
+    /**
+     * @Route("/api/current/dataset/{uuid}/token", name="create_token_dataset", methods={"POST"}, requirements={"uuid"="[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}"})
+     */
+    public function createTokenToDataSetAction(Request $request, $uuid)
+    {
+        $data = $this->checkRoleAndId($request);
+
+        $dataset = $this->em->getRepository(DataSet::class)->findOneBy(['uuid' => $uuid]);
+        if (null === $dataset)
+            throw new HttpException(404, "Dataset not found.");
+        
+        $current = $this->cr->getCurrentUser($this);
+        if ($current !== $dataset->getOwner())
+            throw new HttpException(401, "You are not the owner.");
+
+        if (!isset($data['privacy']))
+            throw new HttpException(400, "Column privacy not found.");
+
+        $message = "Good";
+        if ($data['privacy'] === 0) {
+            $surveyToken = new SurveyToken();
+            $surveyToken->setPrivacy(0);
+            $surveyToken->setDataset($dataset);
+            try {
+                if (isset($data['exp']) && strtotime($data['exp']) !== false){
+                    $exp = new \DateTime();
+                    $exp->setTimestamp(strtotime($data['exp']));
+                    if ($exp> new \DateTime()) {
+                        $surveyToken->setExpirationDate($exp);
+                    } else
+                        throw new HttpException(400, "Expiration date invalid.");
+                } else
+                    throw new HttpException(400, "Expiration date invalid.");
+                $this->em->persist($surveyToken);
+                $this->em->flush();
+            } catch (\Exception $ex) {
+                throw new HttpException(400, $ex->getMessage());
+            }
+            $message = $this->JWTencoder->encode(['dataset' => $dataset->getUuid(), 'survey' => $surveyToken->getUuid(), 'exp' => $surveyToken->getExpirationDate()->getTimestamp()]);
+        }
+
+        return new JsonResponse([
+            'code' => 200,
+            'token' => $message
+        ], 200);
     }
 
     /**

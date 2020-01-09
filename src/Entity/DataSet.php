@@ -77,9 +77,15 @@ class DataSet
      */
     private $parts;
 
+    /**
+     * @ORM\OneToMany(targetEntity="App\Entity\SurveyToken", mappedBy="dataset", orphanRemoval=true)
+     */
+    private $surveyTokens;
+
     public function __construct()
     {
         $this->parts = new ArrayCollection();
+        $this->surveyTokens = new ArrayCollection();
     }
 
     /**
@@ -185,6 +191,37 @@ class DataSet
             // set the owning side to null (unless already changed)
             if ($part->getDataSet() === $this) {
                 $part->setDataSet(null);
+            }
+        }
+
+        return $this;
+    }
+
+    /**
+     * @return Collection|SurveyTokens[]
+     */
+    public function getSurveyTokens(): Collection
+    {
+        return $this->surveyTokens;
+    }
+
+    public function addSurveyToken(SurveyTokens $surveyToken): self
+    {
+        if (!$this->surveyTokens->contains($surveyToken)) {
+            $this->surveyTokens[] = $surveyToken;
+            $surveyToken->setDataset($this);
+        }
+
+        return $this;
+    }
+
+    public function removeSurveyToken(SurveyTokens $surveyToken): self
+    {
+        if ($this->surveyTokens->contains($surveyToken)) {
+            $this->surveyTokens->removeElement($surveyToken);
+            // set the owning side to null (unless already changed)
+            if ($surveyToken->getDataset() === $this) {
+                $surveyToken->setDataset(null);
             }
         }
 
