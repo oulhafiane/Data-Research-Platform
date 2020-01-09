@@ -198,14 +198,14 @@ class DataSet
     }
 
     /**
-     * @return Collection|SurveyTokens[]
+     * @return Collection|SurveyToken[]
      */
     public function getSurveyTokens(): Collection
     {
         return $this->surveyTokens;
     }
 
-    public function addSurveyToken(SurveyTokens $surveyToken): self
+    public function addSurveyToken(SurveyToken $surveyToken): self
     {
         if (!$this->surveyTokens->contains($surveyToken)) {
             $this->surveyTokens[] = $surveyToken;
@@ -215,7 +215,7 @@ class DataSet
         return $this;
     }
 
-    public function removeSurveyToken(SurveyTokens $surveyToken): self
+    public function removeSurveyToken(SurveyToken $surveyToken): self
     {
         if ($this->surveyTokens->contains($surveyToken)) {
             $this->surveyTokens->removeElement($surveyToken);
