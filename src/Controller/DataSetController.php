@@ -211,6 +211,59 @@ class DataSetController extends AbstractController
     }
 
     /**
+     * @Route("/api/current/dataset/{uuid}/token/{uuidt}", name="specific_token_dataset", methods={"GET"}, requirements={"uuid"="[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}", "uuidt"="[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}"})
+     */
+    public function getTokenDataset($uuid, $uuidt)
+    {
+        $dataset = $this->em->getRepository(DataSet::class)->findOneBy(['uuid' => $uuid]);
+        if (null === $dataset)
+            throw new HttpException(404, "Dataset not found.");
+        
+        $current = $this->cr->getCurrentUser($this);
+        if ($current !== $dataset->getOwner())
+            throw new HttpException(401, "You are not the owner.");
+
+        $token = $this->em->getRepository(SurveyToken::class)->findOneBy(['uuid' => $uuidt, 'dataset' => $dataset]);
+        if (null === $token)
+            throw new HttpException(404, "Token not found.");
+
+        return new JsonResponse([
+            'code' => 200,
+            'token' => $this->JWTencoder->encode(['dataset' => $dataset->getUuid(), 'survey' => $token->getUuid(), 'exp' => $token->getExpirationDate()->getTimestamp()])
+        ], 200);
+    }
+
+    /**
+     * @Route("/api/current/dataset/{uuid}/token/{uuidt}", name="delete_token_dataset", methods={"DELETE"}, requirements={"uuid"="[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}", "uuidt"="[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}"})
+     */
+    public function deleteTokenDataset($uuid, $uuidt)
+    {
+        $dataset = $this->em->getRepository(DataSet::class)->findOneBy(['uuid' => $uuid]);
+        if (null === $dataset)
+            throw new HttpException(404, "Dataset not found.");
+        
+        $current = $this->cr->getCurrentUser($this);
+        if ($current !== $dataset->getOwner())
+            throw new HttpException(401, "You are not the owner.");
+
+        $token = $this->em->getRepository(SurveyToken::class)->findOneBy(['uuid' => $uuidt, 'dataset' => $dataset]);
+        if (null === $token)
+            throw new HttpException(404, "Token not found.");
+
+        try {
+            $this->em->remove($token);
+            $this->em->flush();
+        } catch (\Exception $ex) {
+            throw new HttpException(404, $ex->getMessage());
+        }
+
+        return new JsonResponse([
+            'code' => 200,
+            'token' => "Token deleted successfully."
+        ], 200);
+    }
+
+    /**
      * @Route("/api/current/dataset/{uuid}/token", name="create_token_dataset", methods={"POST"}, requirements={"uuid"="[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}"})
      */
     public function createTokenToDataSetAction(Request $request, $uuid)
