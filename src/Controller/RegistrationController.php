@@ -23,6 +23,11 @@ class RegistrationController extends AbstractController
 		$this->form = $form;
 	}
 
+	public function doNothing($object)
+    {
+        return false;
+    }
+
 	public function setPassword($user)
 	{
 		$user->setPassword(
@@ -43,6 +48,6 @@ class RegistrationController extends AbstractController
 	{
 		$this->form->checkId($request);
 
-		return $this->form->validate($request, User::class, array($this, 'setPassword'), ['new-user'], ['new-user']);
+		return $this->form->validate($request, User::class, array($this, 'setPassword'), array($this, 'doNothing'), ['new-user'], ['new-user']);
 	}
 }

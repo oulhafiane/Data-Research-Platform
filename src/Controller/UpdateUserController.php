@@ -8,7 +8,7 @@ use App\Entity\Customer;
 use App\Entity\Admin;
 use App\Entity\Photo;
 use App\Service\CurrentUser;
-use App\Service\UpdateFormHandler;
+use App\Service\FormHandler;
 use App\Helper\UploadedBase64EncodedFile;
 use App\Helper\Base64EncodedFile;
 use Symfony\Component\HttpKernel\Exception\HttpException;
@@ -28,13 +28,18 @@ class UpdateUserController extends AbstractController
     private $form;
     private $entityManager;
 
-    public function __construct(ValidatorInterface $validator, CurrentUser $cr, CacheManager $cacheManager, UpdateFormHandler $form, EntityManagerInterface $entityManager)
+    public function __construct(ValidatorInterface $validator, CurrentUser $cr, CacheManager $cacheManager, FormHandler $form, EntityManagerInterface $entityManager)
     {
         $this->validator = $validator;
         $this->cr = $cr;
         $this->imagineCacheManager = $cacheManager;
         $this->form = $form;
         $this->entityManager = $entityManager;
+    }
+
+    public function doNothing($object)
+    {
+        return false;
     }
 
     public function addType($data)
@@ -79,11 +84,15 @@ class UpdateUserController extends AbstractController
         $current->setOrganizationCountry($infos->getOrganizationCountry());
         $current->setPhone($infos->getPhone());
         $current->setBio($infos->getBio());
-        foreach($current->getDomains() as $domain) {
-            $current->removeDomain($domain);
+        if (null !== $current->getDomains()) {
+            foreach($current->getDomains() as $domain) {
+                $current->removeDomain($domain);
+            }
         }
-        foreach($infos->getDomains() as $domain) {
-            $current->addDomain($domain);
+        if (null !== $infos->getDomains()) {
+            foreach($infos->getDomains() as $domain) {
+                $current->addDomain($domain);
+            }
         }
         
         return $current;
@@ -137,7 +146,7 @@ class UpdateUserController extends AbstractController
         $data = json_decode($request->getContent(), true);
         $data = $this->addType($data);
 
-        return $this->form->validate($data, User::class, array($this, 'updateUser'), ['update-user'], ['update-user']);
+        return $this->form->updateV1($data, User::class, array($this, 'updateUser'), ['update-user'], ['update-user']);
     }
 
     /**

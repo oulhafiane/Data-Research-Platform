@@ -41,6 +41,11 @@ class ProblematicController extends AbstractController
         $this->serializer = $serializer;
     }
 
+    public function doNothing($object)
+    {
+        return false;
+    }
+
     public function setOwner($problematic)
     {
         $problematic->setOwner($this->cr->getCurrentUser($this));
@@ -149,7 +154,7 @@ class ProblematicController extends AbstractController
             }
         }
         
-        return $this->form->update($request, Problematic::class, array($this, 'updatePhotos'), ['update-problematic'], ['update-problematic'], $id);
+        return $this->form->update($request, Problematic::class, array($this, 'updatePhotos'), array($this, 'doNothing'), ['update-problematic'], ['update-problematic'], $id);
     }
 
     /**
@@ -159,7 +164,7 @@ class ProblematicController extends AbstractController
     {
         $this->checkRoleAndId($request);
 
-        return $this->form->validate($request, Problematic::class, array($this, 'setOwner'), ['new-problematic'], ['new-problematic'], array($this, 'notifyFollowers'));
+        return $this->form->validate($request, Problematic::class, array($this, 'setOwner'), array($this, 'doNothing'), ['new-problematic'], ['new-problematic'], array($this, 'notifyFollowers'));
     }
 
     /**

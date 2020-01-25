@@ -70,10 +70,44 @@ class DataSetController extends AbstractController
         }
     }
 
+    public function getType($variable)
+    {
+        switch($variable) {
+            case 0:
+                return "TEXT";
+            case 1:
+                return "INTEGER";
+            case 2:
+                return "REAL";
+            default:
+                return "TEXT";
+        }
+    }
+
+    public function afterPersistVariables($part, $state)
+    {
+        $dataset = $part->getDataset();
+        $db_name = $this->getParameter('datasets_location').'/'.$dataset->getUuid().'.db';
+        $filesystem = new Filesystem();
+        if (true === $state && $filesystem->exists($db_name.".copy")) {
+            $filesystem->remove($db_name.".copy");
+        } else if ($filesystem->exists($db_name.".copy")) {
+            $filesystem->copy($db_name.".copy", $db_name, true);
+            $filesystem->remove($db_name.".copy");
+        }
+    }
+
     public function addVariables($part)
     {
         $variables = $part->getVariables();
         if (null === $variables) return false;
+        $dataset = $part->getDataset();
+        $db_name = $this->getParameter('datasets_location').'/'.$dataset->getUuid().'.db';
+        $filesystem = new Filesystem();
+        if ($filesystem->exists($db_name))
+            $filesystem->copy($db_name, $db_name.".copy", true);
+        $db=new \SQLite3($db_name);
+        $db->exec("CREATE TABLE IF NOT EXISTS data (id INTEGER PRIMARY KEY AUTOINCREMENT);");
         foreach($variables as $variable) {
             $violations = $this->validator->validate($variable, null, ['add-variables']);
             $message = '';
@@ -84,9 +118,15 @@ class DataSetController extends AbstractController
                 throw new HttpException(406, $message);
 
             $variable->setPart($part);
+            $variable->setNameInDb($variable->getName().bin2hex(random_bytes(10)));
             try {
                 $this->em->persist($variable);
+                $db->exec("ALTER TABLE data ADD ".$variable->getNameInDb()." ".$this->getType($variable->getType()).";");
             } catch (\Exception $ex) {
+                if ($filesystem->exists($db_name.".copy")) {
+                    $filesystem->copy($db_name.".copy", $db_name, true);
+                    $filesystem->remove($db_name.".copy");
+                }
                 throw new HttpException(400, $ex->getMessage());
             }
         }
@@ -120,7 +160,7 @@ class DataSetController extends AbstractController
         if ($current !== $dataset->getOwner())
             throw new HttpException(401, "You are not the owner.");
 
-        return $this->form->update($request, DataSet::class, array($this, 'doNothing'), ['update-dataset'], ['update-dataset'], $dataset->getId());
+        return $this->form->update($request, DataSet::class, array($this, 'doNothing'), array($this, 'doNothing'), ['update-dataset'], ['update-dataset'], $dataset->getId());
     }
 
     /**
@@ -173,7 +213,7 @@ class DataSetController extends AbstractController
     {
         $this->checkRoleAndId($request);
 
-        return $this->form->validate($request, DataSet::class, array($this, 'setOwner'), ['new-dataset'], ['new-dataset']);
+        return $this->form->validate($request, DataSet::class, array($this, 'setOwner'), array($this, 'doNothing'), ['new-dataset'], ['new-dataset']);
     }
 
     /**
@@ -325,7 +365,7 @@ class DataSetController extends AbstractController
         if ($current !== $dataset->getOwner())
             throw new HttpException(401, "You are not the owner.");
 
-        return $this->form->validate($request, Part::class, array($this, 'setDataSetToObject'), ['new-part'], ['new-part'], null, $dataset);
+        return $this->form->validate($request, Part::class, array($this, 'setDataSetToObject'), array($this, 'afterPersistVariables'), ['new-part'], ['new-part'], null, $dataset);
     }
 
     /**
@@ -347,7 +387,7 @@ class DataSetController extends AbstractController
         if (null === $part)
             throw new HttpException(404, "Part of dataset not found.");
 
-        return $this->form->update($request, Part::class, array($this, 'doNothing'), ['update-part'], ['update-part'], $part->getId());
+        return $this->form->update($request, Part::class, array($this, 'doNothing'), array($this, 'doNothing'), ['update-part'], ['update-part'], $part->getId());
     }
 
     /**
@@ -369,7 +409,76 @@ class DataSetController extends AbstractController
         if (null === $part)
             throw new HttpException(404, "Part of dataset not found.");
 
-        return $this->form->update($request, Part::class, array($this, 'addVariables'), ['add-variables'], ['add-variables'], $part->getId());
+        return $this->form->update($request, Part::class, array($this, 'addVariables'), array($this, 'afterPersistVariables'), ['add-variables'], ['add-variables'], $part->getId());
+    }
+
+    /**
+     * @Route("/api/anon/dataset/{uuid}/part/{id}", name="put_variables_dataset", methods={"PUT"}, requirements={"id"="\d+", "uuid"="[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}"})
+     */
+    public function putVariablesAction(Request $request, $uuid, $id)
+    {
+        $dataset = $this->em->getRepository(DataSet::class)->findOneBy(['uuid' => $uuid]);
+        if (null === $dataset)
+            throw new HttpException(404, "Dataset not found.");
+        
+        $part = $this->em->getRepository(Part::class)->findOneBy(['id' => $id, 'dataSet' => $dataset->getId()]);
+        if (null === $part)
+            throw new HttpException(404, "Part of dataset not found.");
+
+        $data = json_decode($request->getContent(), true);
+        if (!array_key_exists('row', $data))
+            throw new HttpException(400, "Could not found row field.");
+        if (!array_key_exists('variables', $data) || !is_array($data['variables']))
+            throw new HttpException(400, "Could not found variables array.");
+        
+        $sqlVariables = "";
+        $sqlValues = "";
+        $isUpdate = false;
+        if (null !== $data['row'] && !ctype_digit($data['row']))
+            $isUpdate = true;
+        foreach($data['variables'] as $variable) {
+            if (!is_array($variable) || !array_key_exists('id', $variable) || !array_key_exists('value', $variable))
+                throw new HttpException(400, "Could not found variables array.");
+            if (null === $variable['id'] || null === $variable['value'])
+                throw new HttpException(400, "Could not found variables array.");
+            if ("" === $variable['id'] || "" === $variable['value'])
+                throw new HttpException(400, "Could not found variables array.");
+            $realVariable = $this->em->getRepository(Variable::class)->findOneBy(['part' => $part, 'id' => $variable['id']]);
+            if (null === $realVariable)
+                throw new HttpException(400, "Some of the variables does not exists.");
+            if ($isUpdate) {
+                $sqlValues .= $realVariable->getNameInDb().'="'.$variable['value'].'",';
+            } else {
+                $sqlVariables .= $realVariable->getNameInDb().",";
+                $sqlValues .= '"'.$variable['value'].'",';
+            }
+        }
+        $db_name = $this->getParameter('datasets_location').'/'.$dataset->getUuid().'.db';
+        $filesystem = new Filesystem();
+        if ($filesystem->exists($db_name))
+            $filesystem->copy($db_name, $db_name.".copy", true);
+        $db=new \SQLite3($db_name);
+        if ($isUpdate)
+            $sql = "UPDATE data SET ".rtrim($sqlValues, ", ")." WHERE rowid=".$data['row'].";";
+        else
+            $sql = "INSERT INTO data (".rtrim($sqlVariables, ", ").") VALUES(".rtrim($sqlValues, ", ").");";
+
+        $extras = null;
+        try {
+            $db->exec($sql);
+            if (!$isUpdate)
+                $extras['row'] = $db->lastInsertRowid();
+            $filesystem->remove($db_name.".copy");
+        } catch (\Exception $ex) {
+            $filesystem->remove($db_name.".copy");
+            throw new HttpException(400, "Some of the variables does not exists.");
+        }
+
+        return new JsonResponse([
+            'code' => 200,
+            'message' => "Answers added successfully.",
+            'extras' => $extras
+        ], 200);
     }
 
     /**
@@ -395,7 +504,7 @@ class DataSetController extends AbstractController
         if (null === $variable)
             throw new HttpException(404, "Variable not found.");
 
-        return $this->form->update($request, Variable::class, array($this, 'doNothing'), ['update-variable'], ['update-variable'], $variable->getId());
+        return $this->form->update($request, Variable::class, array($this, 'doNothing'), array($this, 'doNothing'), ['update-variable'], ['update-variable'], $variable->getId());
     }
 
     /**

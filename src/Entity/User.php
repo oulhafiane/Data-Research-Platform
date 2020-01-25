@@ -396,7 +396,7 @@ abstract class User implements UserInterface
         return $this->phone;
     }
 
-    public function setPhone(string $phone): self
+    public function setPhone(?string $phone): self
     {
         $this->phone = $phone;
 
@@ -440,7 +440,7 @@ abstract class User implements UserInterface
     /**
      * @return Collection|Category[]
      */
-    public function getDomains(): Collection
+    public function getDomains(): ?Collection
     {
         return $this->domains;
     }

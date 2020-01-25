@@ -8,6 +8,10 @@ use JMS\Serializer\Annotation as Serializer;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\VariableRepository")
+ * @ORM\Table(name="variable", uniqueConstraints={
+ *      @ORM\UniqueConstraint(name="unique_variable", columns={"name", "part_id"})
+ *      }
+ * )
  */
 class Variable
 {
@@ -64,6 +68,11 @@ class Variable
      * @ORM\ManyToOne(targetEntity="App\Entity\Part", inversedBy="variables")
      */
     private $part;
+
+    /**
+     * @ORM\Column(type="string", length=100)
+     */
+    private $nameInDb;
 
     public function getId(): ?int
     {
@@ -126,6 +135,18 @@ class Variable
     public function setPart(?Part $part): self
     {
         $this->part = $part;
+
+        return $this;
+    }
+
+    public function getNameInDb(): ?string
+    {
+        return $this->nameInDb;
+    }
+
+    public function setNameInDb(string $nameInDb): self
+    {
+        $this->nameInDb = $nameInDb;
 
         return $this;
     }

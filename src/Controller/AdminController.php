@@ -32,6 +32,11 @@ class AdminController extends AbstractController
         $this->form = $form;
     }
 
+    public function doNothing($object)
+    {
+        return false;
+    }
+
     public function setOwner($news)
     {
         $news->setCreator($this->cr->getCurrentUser($this));
@@ -56,7 +61,7 @@ class AdminController extends AbstractController
     {
         $this->checkRoleAndId($request);
 
-        return $this->form->validate($request, News::class, array($this, 'setOwner'), ['new-news'], ['new-news']);
+        return $this->form->validate($request, News::class, array($this, 'setOwner'), array($this, 'doNothing'), ['new-news'], ['new-news']);
     }
 
     /**

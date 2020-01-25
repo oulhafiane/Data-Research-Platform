@@ -17,6 +17,11 @@ class PublicController extends AbstractController
         $this->form = $form;
     }
 
+    public function doNothing($object)
+    {
+        return false;
+    }
+
     public function setOwner($msg)
     {
         return false;
@@ -27,6 +32,6 @@ class PublicController extends AbstractController
      */
     public function contactUsAction(Request $request)
     {
-        return $this->form->validate($request, MsgContactUs::class, array($this, 'setOwner'), ['new-msg'], ['new-msg']);
+        return $this->form->validate($request, MsgContactUs::class, array($this, 'setOwner'), array($this, 'doNothing'), ['new-msg'], ['new-msg']);
     }
 }

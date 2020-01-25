@@ -10,16 +10,29 @@ security:
             entity:
                 class: App\Entity\User
                 property: email
+        token:
+            entity:
+                class: App\Entity\SurveyToken
+                property: uuid
     firewalls:
+        anon:
+            pattern:    ^/api/anon
+            stateless:  true
+            provider: token
+            guard:
+                authenticators:
+                    - App\Security\TokenAuthenticator
         admin:
             pattern:    ^/api/admin
             stateless:  true
+            provider: user
             guard:
                 authenticators:
                     - lexik_jwt_authentication.jwt_token_authenticator
         current:
             pattern:    ^/api/current
             stateless:  true
+            provider: user
             guard:
                 authenticators:
                     - lexik_jwt_authentication.jwt_token_authenticator
