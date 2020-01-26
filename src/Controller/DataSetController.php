@@ -413,7 +413,25 @@ class DataSetController extends AbstractController
     }
 
     /**
-     * @Route("/api/anon/dataset/{uuid}/part/{id}", name="put_variables_dataset", methods={"PUT"}, requirements={"id"="\d+", "uuid"="[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}"})
+     * @Route("/api/anon/dataset/{uuid}/parts", name="anon_get_dataset", methods={"GET"}, requirements={"uuid"="[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}"})
+     */
+    public function anonGetDataSetInfoAction($uuid)
+    {
+        $dataset = $this->em->getRepository(DataSet::class)->findOneBy(['uuid' => $uuid]);
+        if (null === $dataset)
+            throw new HttpException(404, "Dataset not found.");
+        $current = $this->cr->getCurrentUser($this);
+        // if ($current != $dataset->getOwner())
+        //     throw new HttpException(401, "You are not the owner");
+        $data = $this->serializer->serialize($dataset, 'json', SerializationContext::create()->setGroups(array('my-dataset', 'my-dataset')));
+        $response = new Response($data);
+        $response->headers->set('Content-Type', 'application/json');
+
+        return $response;
+    }
+
+    /**
+     * @Route("/api/anon/dataset/{uuid}/part/{id}", name="put_variables_dataset", methods={"POST"}, requirements={"id"="\d+", "uuid"="[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}"})
      */
     public function putVariablesAction(Request $request, $uuid, $id)
     {

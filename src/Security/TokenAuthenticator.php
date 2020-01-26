@@ -32,6 +32,9 @@ class TokenAuthenticator extends AbstractGuardAuthenticator
      */
     public function supports(Request $request)
     {
+        preg_match("/.*\/dataset\/(.*?)\//", $request->getUri(), $matches);
+        if (!isset($matches[1]))
+            return false;
         return $request->headers->has('X-AUTH-TOKEN');
     }
 
@@ -42,8 +45,6 @@ class TokenAuthenticator extends AbstractGuardAuthenticator
     public function getCredentials(Request $request)
     {
         preg_match("/.*\/dataset\/(.*?)\//", $request->getUri(), $matches);
-        if (!isset($matches[1]))
-            return null;
         $dataset = $matches[1];
         return [
             'token' => $request->headers->get('X-AUTH-TOKEN'),
