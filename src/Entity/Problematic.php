@@ -125,6 +125,13 @@ class Problematic
     private $keywords = [];
 
     /**
+     * @ORM\Column(type="array", nullable=true)
+     * @Serializer\Type("array")
+	 * @Serializer\Groups({"new-problematic", "update-problematic", "list-problematics"})
+     */
+    private $researchers = [];
+
+    /**
      * @ORM\PrePersist
      */
     public function onPrePersist()
@@ -358,6 +365,18 @@ class Problematic
     public function setKeywords(?array $keywords): self
     {
         $this->keywords = $keywords;
+
+        return $this;
+    }
+
+    public function getResearchers(): ?array
+    {
+        return $this->researchers;
+    }
+
+    public function setResearchers(?array $researchers): self
+    {
+        $this->researchers = $researchers;
 
         return $this;
     }
