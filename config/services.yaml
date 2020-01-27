@@ -34,9 +34,9 @@ services:
         public: false
     App\Security\TokenAuthenticator:
         
-#    App\EventListener\ExceptionListener:
-#       tags:
-#           - { name: kernel.event_listener, event: kernel.exception }
+    App\EventListener\ExceptionListener:
+       tags:
+           - { name: kernel.event_listener, event: kernel.exception }
     App\EventListener\PhotoSerializerListener:
         tags:
             - { name: jms_serializer.event_subscriber }
