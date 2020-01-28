@@ -60,7 +60,7 @@ class Variable
     /**
      * @ORM\Column(type="array", nullable=true)
      * @Serializer\Type("array")
-     * @Serializer\Groups({"my-dataset", "new-part", "add-variables", "my-dataset"})
+     * @Serializer\Groups({"my-dataset", "new-part", "add-variables", "update-variable", "my-dataset"})
      */
     private $options = [];
 
