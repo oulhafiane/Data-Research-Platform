@@ -28,7 +28,7 @@ class Problematic
      * @ORM\Column(type="string", length=100)
      * @Assert\NotBlank(groups={"new-problematic", "update-problematic"})
 	 * @Assert\Length(
-	 *	min = 5,
+	 *	min = 3,
 	 *	max = 100,
 	 *	groups={"new-problematic", "update-problematic"}
 	 * )
@@ -67,13 +67,6 @@ class Problematic
      * @Serializer\Groups({"new-problematic", "update-problematic", "list-problematics"})
      */
     private $link;
-
-    /**
-     * @ORM\Column(type="string", length=100)
-     * @Assert\NotBlank(groups={"new-problematic"})
-     * @Serializer\Groups({"new-problematic", "update-problematic", "list-problematics"})
-     */
-    private $type;
 
     /**
      * @ORM\ManyToOne(targetEntity="App\Entity\Searcher", inversedBy="problematics")
@@ -219,18 +212,6 @@ class Problematic
     public function setLink(?string $link): self
     {
         $this->link = $link;
-
-        return $this;
-    }
-
-    public function getType(): ?string
-    {
-        return $this->type;
-    }
-
-    public function setType(string $type): self
-    {
-        $this->type = $type;
 
         return $this;
     }
