@@ -86,7 +86,7 @@ class RegistrationController extends AbstractController
 				$jwtToken = $this->JWTencoder->encode(['email' => $user->getEmail(), 'token' => $recoveryToken, 'exp' => $exp->getTimestamp()]);
 				
 				$message = (new \Swift_Message('Resetting your password'))
-				->setFrom('info@impactree.com')
+				->setFrom('zakariaa.oulhafiane@gmail.com')
 				->setTo($user->getEmail())
 				->setBody(
 					$this->renderView(
