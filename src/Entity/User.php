@@ -173,6 +173,11 @@ abstract class User implements UserInterface
      */
     private $notifications;
 
+    /**
+     * @ORM\Column(type="string", nullable=true)
+     */
+    private $recoveryToken;
+
     public function __construct()
     {
         $this->follow = new ArrayCollection();
@@ -516,6 +521,18 @@ abstract class User implements UserInterface
                 $notification->setOwner(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getRecoveryToken(): ?string
+    {
+        return $this->recoveryToken;
+    }
+
+    public function setRecoveryToken(?string $recoveryToken): self
+    {
+        $this->recoveryToken = $recoveryToken;
 
         return $this;
     }

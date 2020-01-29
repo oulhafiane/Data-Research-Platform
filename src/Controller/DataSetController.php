@@ -321,6 +321,7 @@ class DataSetController extends AbstractController
         if (!isset($data['privacy']))
             throw new HttpException(400, "Column privacy not found.");
 
+        //need to implement privacy when is set to 0
         $message = "Good";
         if ($data['privacy'] === 0) {
             $surveyToken = new SurveyToken();
