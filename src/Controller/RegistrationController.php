@@ -109,4 +109,49 @@ class RegistrationController extends AbstractController
             'message' => "If you are registered, an email will be sent to you.",
         ], 200);
 	}
+
+	/**
+	 * @Route("/api/changePassword", name="change_password", methods={"POST"})
+	 */
+	public function changePasswordAction(Request $request)
+	{
+		$data = json_decode($request->getContent(), true);
+		if (null !== $data && array_key_exists('id', $data))
+			throw new HttpException(406, 'Field \'id\' not acceptable.');
+			if (!array_key_exists('token', $data))
+			throw new HttpException(406, 'Field \'token\' not found.');
+		if (!array_key_exists('password', $data))
+			throw new HttpException(406, 'Field \'password\' not found.');
+
+		$tokenDecoded = $this->JWTencoder->decode($data['token']);
+		if (!array_key_exists('email', $tokenDecoded))
+			throw new HttpException(406, 'Token invalid.');
+		if (!array_key_exists('token', $tokenDecoded))
+			throw new HttpException(406, 'Token invalid.');
+		if (!array_key_exists('exp', $tokenDecoded))
+			throw new HttpException(406, 'Token invalid.');
+		
+		/**** remember to check if the expiration time is ok ****/
+
+		$user = $this->em->getRepository(User::class)->findOneBy(['email' => $tokenDecoded['email']]);
+		if (null === $user)
+			throw new HttpException(406, 'Token invalid.');
+		
+		if ($user->getRecoveryToken() !== $tokenDecoded['token'])
+			throw new HttpException(406, 'Token invalid.');
+
+		$user->setPlainPassword($data['password']);
+		$this->setPassword($user);
+		try {
+			$this->em->persist($user);
+			$this->em->flush();
+		} catch (\Exception $ex) {
+			throw new HttpException(500, $ex->getMessage());
+		}
+
+		return new JsonResponse([
+            'code' => 200,
+            'message' => "Password changed successfully.",
+        ], 200);
+	}
 }

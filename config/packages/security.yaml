@@ -56,6 +56,11 @@ security:
             methods: [POST]
             stateless:  true
             anonymous: true
+        change:
+            pattern:    ^/api/changePassword$
+            methods: [POST]
+            stateless:  true
+            anonymous: true
         refresh:
             pattern:  ^/api/token/refresh$
             stateless: true
@@ -97,6 +102,7 @@ security:
          - { path: ^/api/token/refresh, roles: IS_AUTHENTICATED_ANONYMOUSLY }
          - { path: ^/api/register$, roles: IS_AUTHENTICATED_ANONYMOUSLY, methods: [POST] }
          - { path: ^/api/forgotPassword$, roles: IS_AUTHENTICATED_ANONYMOUSLY, methods: [POST] }
+         - { path: ^/api/changePassword$, roles: IS_AUTHENTICATED_ANONYMOUSLY, methods: [POST] }
          - { path: ^/api/oauth$, roles: IS_AUTHENTICATED_ANONYMOUSLY, methods: [POST] }
          - { path: ^/api/admin, roles: ROLE_ADMIN }
          - { path: ^/api/current, roles: IS_AUTHENTICATED_FULLY }

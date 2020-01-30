@@ -256,6 +256,13 @@ abstract class User implements UserInterface
         return (string) $this->plainPassword;
     }
 
+    public function setPlainPassword(string $plainPassword): self
+    {
+        $this->plainPassword = $plainPassword;
+
+        return $this;
+    }
+
     /**
      * @see UserInterface
      */
