@@ -141,6 +141,7 @@ class RegistrationController extends AbstractController
 			throw new HttpException(406, 'Token invalid.');
 
 		$user->setPlainPassword($data['password']);
+		$user->setRecoveryToken(null);
 		$this->setPassword($user);
 		try {
 			$this->em->persist($user);
