@@ -85,6 +85,7 @@ class RegistrationController extends AbstractController
 				$exp->add(new \DateInterval('PT1H'));
 				$jwtToken = $this->JWTencoder->encode(['email' => $user->getEmail(), 'token' => $recoveryToken, 'exp' => $exp->getTimestamp()]);
 				
+				$url = $this->getParameter('front_url');
 				$message = (new \Swift_Message('Resetting your password'))
 				->setFrom('zakariaa.oulhafiane@gmail.com')
 				->setTo($user->getEmail())
@@ -93,7 +94,7 @@ class RegistrationController extends AbstractController
 						'emails/resetPassword.html.twig',
 						[
 							'name' => $user->getFirstName() ." ". $user->getLastName(),
-							'confirmationUrl' => "https://impactree.um6p.ma/auth/login?recover=".$jwtToken
+							'confirmationUrl' => $url."auth/login?recover=".$jwtToken
 						]
 					),
 					'text/html'

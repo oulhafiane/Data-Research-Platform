@@ -8,6 +8,7 @@ parameters:
     locale: 'en'
     datasets_location: '%env(DATASETS_LOCATION)%'
     google_id: '%env(GOOGLE_ID)%'
+    front_url: '%env(FRONTEND_URL)%'
 
 services:
     # default configuration for services in *this* file
