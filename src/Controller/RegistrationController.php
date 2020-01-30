@@ -93,7 +93,7 @@ class RegistrationController extends AbstractController
 						'emails/resetPassword.html.twig',
 						[
 							'name' => $user->getFirstName() ." ". $user->getLastName(),
-							'confirmationUrl' => "https://impactree.um6p.ma/resetPassword?token=".$jwtToken
+							'confirmationUrl' => "https://impactree.um6p.ma/auth/login?recover=".$jwtToken
 						]
 					),
 					'text/html'
