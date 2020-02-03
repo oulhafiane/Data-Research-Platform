@@ -217,7 +217,7 @@ class DataSetController extends AbstractController
             $stmt = $db->prepare($sql);
             $stmt->bindValue(':offset', $offset, SQLITE3_INTEGER);
             $result = $stmt->execute();
-            while($row = $result->fetchArray()) {
+            while($row = $result->fetchArray(SQLITE3_ASSOC)) {
                 array_push($data, $row);
             }
         } catch (\Exception $ex) {
