@@ -182,6 +182,55 @@ class DataSetController extends AbstractController
     }
 
     /**
+     * @Route("/api/current/dataset/{uuid}/data", name="get_data_of_dataset", methods={"GET"}, requirements={"uuid"="[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}"})
+     */
+    public function getDataOfDatasetAction(Request $request, $uuid) {
+        $offset = $request->query->get('offset', 0);
+
+        $dataset = $this->em->getRepository(DataSet::class)->findOneBy(['uuid' => $uuid]);
+        if (null === $dataset)
+            throw new HttpException(404, "Dataset not found.");
+        $current = $this->cr->getCurrentUser($this);
+        if ($current != $dataset->getOwner())
+            throw new HttpException(401, "You are not the owner");
+        $variables = $this->em->getRepository(Variable::class)->getVariablesOfDataset($dataset);
+        if (null === $variables)
+           throw new HttpException(404, "There is no variable in this dataset.");
+
+        $db_name = $this->getParameter('datasets_location').'/'.$dataset->getUuid().'.db';
+        $filesystem = new Filesystem();
+        $db=new \SQLite3($db_name);
+        $sql = "SELECT ";
+        $good = false;
+        foreach($variables as $variable) {
+            $good = true;
+            $sql .= $variable->getNameInDb() . " AS " . $variable->getName() . ", ";
+        }
+        if (!$good)
+            throw new HttpException(404, "There is no variable in this dataset.");
+        $sql = rtrim($sql, ", ");
+        $sql .= " FROM data limit 100 offset :offset";
+
+        $data = array();
+        try {
+            $countItems = $db->query("SELECT COUNT(*) as count FROM data")->fetchArray()['count'];
+            $stmt = $db->prepare($sql);
+            $stmt->bindValue(':offset', $offset, SQLITE3_INTEGER);
+            $result = $stmt->execute();
+            while($row = $result->fetchArray()) {
+                array_push($data, $row);
+            }
+        } catch (\Exception $ex) {
+            throw new HttpException(500, $ex->getMessage());
+        }
+
+        return new JsonResponse([
+            'itemsCount' => $countItems,
+            'data' => $data
+        ], 200);
+    }
+
+    /**
      * @Route("/api/current/dataset", name="my_datasets", methods={"GET"})
      */
     public function getMyDataSetsAction(Request $request)

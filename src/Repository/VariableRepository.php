@@ -19,6 +19,17 @@ class VariableRepository extends ServiceEntityRepository
         parent::__construct($registry, Variable::class);
     }
 
+    public function getVariablesOfDataset($dataset)
+    {
+        return $this->createQueryBuilder('v')
+            ->innerJoin('v.part','p')
+            ->andWhere('p.dataSet = :dataset')
+            ->setParameter('dataset', $dataset)
+            ->getQuery()
+            ->getResult()
+        ;
+    }
+
     // /**
     //  * @return Variable[] Returns an array of Variable objects
     //  */
