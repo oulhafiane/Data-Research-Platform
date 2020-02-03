@@ -4,5 +4,5 @@ vich_uploader:
 
     mappings:
         photo_user:
-            uri_prefix: /images/users/
+            uri_prefix: ""
             upload_destination: photo_user_fs
