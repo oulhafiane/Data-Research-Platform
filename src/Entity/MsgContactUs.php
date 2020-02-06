@@ -43,6 +43,7 @@ class MsgContactUs
 	 *	max = 180,
 	 *	groups={"new-msg"}
 	 * )
+     * @Assert\Email(groups={"new-msg"})
 	 * @Serializer\Groups({"new-msg", "list-msgs"})
      */
     private $email;
@@ -56,11 +57,13 @@ class MsgContactUs
 
     /**
      * @ORM\Column(type="datetime")
+     * @Serializer\Groups({"list-msgs"})
      */
     private $date;
 
     /**
      * @ORM\Column(type="boolean")
+     * @Serializer\Groups({"list-msgs"})
      */
     private $seen;
 

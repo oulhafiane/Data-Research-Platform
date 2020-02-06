@@ -141,4 +141,16 @@ abstract class AbstractRepository extends ServiceEntityRepository
 				->addOrderBy('s.date', 'DESC');
 		return $this->paginate($qb, $limit, $page);
 	}
+
+	public function findMsgsContactUs($page = 1, $limit = 10, $seen = null)
+	{
+		$qb = $this->createQueryBuilder('s')
+			->select('s');
+
+		if (null !== $seen)
+		$qb->where('s.seen = ?1')
+				->setParameter(1, $seen);
+		$qb->addOrderBy('s.date', 'DESC');
+		return $this->paginate($qb, $limit, $page);
+	}
 }

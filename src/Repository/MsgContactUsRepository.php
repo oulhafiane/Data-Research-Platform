@@ -3,7 +3,6 @@
 namespace App\Repository;
 
 use App\Entity\MsgContactUs;
-use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Common\Persistence\ManagerRegistry;
 
 /**
@@ -12,7 +11,7 @@ use Doctrine\Common\Persistence\ManagerRegistry;
  * @method MsgContactUs[]    findAll()
  * @method MsgContactUs[]    findBy(array $criteria, array $orderBy = null, $limit = null, $offset = null)
  */
-class MsgContactUsRepository extends ServiceEntityRepository
+class MsgContactUsRepository extends AbstractRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
