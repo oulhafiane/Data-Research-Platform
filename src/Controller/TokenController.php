@@ -29,6 +29,15 @@ class TokenController extends AbstractController
         $this->authenticationSuccessHandler = $authenticationSuccessHandler;
     }
 
+    private function getJwtService()
+    {
+        if (class_exists('\Firebase\JWT\JWT')) {
+            return new \Firebase\JWT\JWT;
+        }
+
+        return new \JWT;
+    }
+
     /**
      * @Route("/api/oauth", name="oauth", methods={"POST"})
      */
@@ -42,7 +51,9 @@ class TokenController extends AbstractController
         if (null !== $data && !array_key_exists('provider', $data))
             throw $this->createAccessDeniedException();
 
-        $client = new \Google_Client(['client_id' => $this->getParameter('google_id')]);
+        $jwt = $this->getJwtService();
+        $jwt::$leeway = 60;
+        $client = new \Google_Client(['client_id' => $this->getParameter('google_id'), 'jwt' => $jwt]);
         $payload = $client->verifyIdToken($data['token']);
         if ($payload) {
             $user = $this->em->getRepository(User::class)->findOneBy(['email' => $payload['email']]);
