@@ -115,6 +115,14 @@ class UpdateUserController extends AbstractController
             $extras['link'] = $this->imagineCacheManager->getBrowserPath($photo->getLink(), 'photo_scale_down');
             $current->setPhoto($photo);
 
+            $violations = $this->validator->validate($photo, null, ['new-photo']);
+            $message = '';
+            foreach ($violations as $violation) {
+                $message .= $violation->getPropertyPath() . ': ' . $violation->getMessage() . ' ';
+            }
+            if (count($violations) !== 0)
+                throw new HttpException(406, $message);
+    
             try {
                 $this->entityManager->persist($photo);
                 $this->entityManager->persist($current);

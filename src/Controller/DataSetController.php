@@ -6,6 +6,7 @@ use App\Entity\DataSet;
 use App\Entity\SurveyToken;
 use App\Entity\Part;
 use App\Entity\Variable;
+use App\Entity\FileExcel;
 use App\Service\CurrentUser;
 use App\Service\FormHandler;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
@@ -21,6 +22,8 @@ use JMS\Serializer\SerializerInterface;
 use JMS\Serializer\SerializationContext;
 use Ramsey\Uuid\Uuid;
 use Lexik\Bundle\JWTAuthenticationBundle\Encoder\JWTEncoderInterface;
+use App\Helper\UploadedBase64EncodedFile;
+use App\Helper\Base64EncodedFile;
 
 class DataSetController extends AbstractController
 {    
@@ -52,10 +55,102 @@ class DataSetController extends AbstractController
         return $data;
     }
 
+    public function import_data_xls($dataset, $db, $db_name)
+    {
+        $filesystem = new Filesystem();
+        if ($filesystem->exists($db_name))
+            $filesystem->copy($db_name, $db_name.".copy", true);
+        $reader = \PhpOffice\PhpSpreadsheet\IOFactory::createReader('Xlsx');
+        $reader->setReadDataOnly(TRUE);
+        $spreadsheet = $reader->load($dataset->getFileExcel()->getFile()->getPathName());
+        $countSheets = $spreadsheet->getSheetCount();
+        try {
+            for ($i=0; $i < $countSheets; $i++) { 
+                $worksheet = $spreadsheet->getSheet($i);
+                $part = new Part();
+                $part->setTitle($worksheet->getTitle());
+                $part->setDataset($dataset);
+                $this->em->persist($part);
+                $db->exec("CREATE TABLE IF NOT EXISTS data (id INTEGER PRIMARY KEY AUTOINCREMENT);");
+                $in_headers = true;
+                $variables = array();
+                $indexRow = 0;
+                foreach ($worksheet->getRowIterator() as $row) {
+                    $cellIterator = $row->getCellIterator();
+                    $cellIterator->setIterateOnlyExistingCells(TRUE);
+                    $count = 0;
+                    $sqlVariables = "";
+                    $sqlValues = "";
+                    foreach ($cellIterator as $cell) {
+                        $value = $cell->getValue();
+                        if ($in_headers === true) {
+                            $variable = new Variable();
+                            $variable->setName($value === NULL ? "Undefined" : $value);
+                            $variable->setQuestion($value === NULL ? "Undefined" : $value);
+                            $variable->setType(5);
+                            $variable->setPart($part);
+                            $variable->setNameInDb($variable->getName().bin2hex(random_bytes(10)));
+                            $this->em->persist($variable);
+                            $db->exec("ALTER TABLE data ADD `".$variable->getNameInDb()."` ".$this->getType($variable->getType()).";");
+                            array_push($variables, $variable);
+                        } else {
+                            if ($i > 0)
+                                $sqlValues .= "`".$variables[$count]->getNameInDb().'`="'.$value.'",';
+                            else {
+                                $sqlVariables .= "`".$variables[$count]->getNameInDb()."`,";
+                                $sqlValues .= '"'.$value.'",';
+                            }
+                        }
+                        $count++;
+                    }
+                    if ($in_headers === false) {
+                        if ($i > 0)
+                            $sql = "UPDATE data SET ".rtrim($sqlValues, ", ")." WHERE rowid=".$indexRow.";";
+                        else
+                            $sql = "INSERT INTO data (".rtrim($sqlVariables, ", ").") VALUES(".rtrim($sqlValues, ", ").");";
+                        $db->exec($sql);
+                    }
+                    $in_headers = false;
+                    $indexRow++;
+                }
+                $filesystem->remove($db_name.".copy");
+           
+            }
+        } catch (\Exception $ex) {
+            if ($filesystem->exists($db_name.".copy")) {
+                $filesystem->copy($db_name.".copy", $db_name, true);
+                $filesystem->remove($db_name.".copy");
+            }
+            throw new HttpException(400, $ex->getMessage());
+        }
+    }
+
+    public function import_data_csv($dataset, $db)
+    {
+        echo "CSV will be available soon...\n";
+    }
+
     public function setOwner($dataset)
     {
         $dataset->setOwner($this->cr->getCurrentUser($this));
         $dataset->setUuid(Uuid::uuid4()->toString());
+
+        $fileExcel = $dataset->getFileExcel();
+
+        if (null !== $fileExcel) {
+            $file = new UploadedBase64EncodedFile(new Base64EncodedFile($fileExcel->getFile()));
+            $fileExcel->setFile($file);
+            $fileExcel->setDataset($dataset);
+            $fileExcel->setLink($file->getClientOriginalName());
+    
+            $violations = $this->validator->validate($dataset, null, ['new-file']);
+            $message = '';
+            foreach ($violations as $violation) {
+                $message .= $violation->getPropertyPath() . ': ' . $violation->getMessage() . ' ';
+            }
+            if (count($violations) !== 0)
+                throw new HttpException(406, $message);
+        }
         try {
             $db_name = $this->getParameter('datasets_location').'/'.$dataset->getUuid().'.db';
             $filesystem = new Filesystem();
@@ -64,9 +159,19 @@ class DataSetController extends AbstractController
                 $db_name = $this->getParameter('datasets_location').'/'.$dataset->getUuid().'.db';
             }
             $db=new \SQLite3($db_name);
+
+            //Getting data from excel file is set
+            if (null !== $fileExcel) {
+                $extension = ltrim(strstr($fileExcel->getLink(), '.'), '.');
+                if ("xlsx" === $extension || "xls" === $extension)
+                    $this->import_data_xls($dataset, $db, $db_name);
+                else if ("csv" === $extension)
+                    $this->import_data_csv($dataset, $db, $db_name);
+            }
+
             return $dataset->getUuid();
         } catch (\Exception $ex) {
-            throw new HttpException(400, "Cannot create the dataset.");
+            throw new HttpException(400, "Cannot create the dataset, Make sure all columns are defined, without collapsing or grouping, and the data have no special or complicated characters.");
         }
     }
 
@@ -121,7 +226,7 @@ class DataSetController extends AbstractController
             $variable->setNameInDb($variable->getName().bin2hex(random_bytes(10)));
             try {
                 $this->em->persist($variable);
-                $db->exec("ALTER TABLE data ADD ".$variable->getNameInDb()." ".$this->getType($variable->getType()).";");
+                $db->exec("ALTER TABLE data ADD `".$variable->getNameInDb()."` ".$this->getType($variable->getType()).";");
             } catch (\Exception $ex) {
                 if ($filesystem->exists($db_name.".copy")) {
                     $filesystem->copy($db_name.".copy", $db_name, true);
@@ -204,18 +309,19 @@ class DataSetController extends AbstractController
         $good = false;
         foreach($variables as $variable) {
             $good = true;
-            $sql .= $variable->getNameInDb() . " AS " . $variable->getName() . ", ";
+            $sql .= "`".$variable->getNameInDb() . "` AS `" . $variable->getName() . "`, ";
         }
         if (!$good)
             throw new HttpException(404, "There is no variable in this dataset.");
         $sql = rtrim($sql, ", ");
-        $sql .= " FROM data limit 100 offset :offset";
+        //$sql .= " FROM data limit 100 offset :offset";
+        $sql .= " FROM data";
 
         $data = array();
         try {
             $countItems = $db->query("SELECT COUNT(*) as count FROM data")->fetchArray()['count'];
             $stmt = $db->prepare($sql);
-            $stmt->bindValue(':offset', $offset, SQLITE3_INTEGER);
+            //$stmt->bindValue(':offset', $offset, SQLITE3_INTEGER);
             $result = $stmt->execute();
             while($row = $result->fetchArray(SQLITE3_ASSOC)) {
                 array_push($data, $row);
@@ -515,9 +621,9 @@ class DataSetController extends AbstractController
             if (null === $realVariable)
                 throw new HttpException(400, "Some of the variables does not exists.");
             if ($isUpdate) {
-                $sqlValues .= $realVariable->getNameInDb().'="'.$variable['value'].'",';
+                $sqlValues .= "`".$realVariable->getNameInDb().'`="'.$variable['value'].'",';
             } else {
-                $sqlVariables .= $realVariable->getNameInDb().",";
+                $sqlVariables .= "`".$realVariable->getNameInDb()."`,";
                 $sqlValues .= '"'.$variable['value'].'",';
             }
         }
@@ -609,5 +715,55 @@ class DataSetController extends AbstractController
             'code' => 200,
             'message' => "Variable deleted successfully.",
         ], 200);
+    }
+
+    /**
+     * @Route("/api/current/dataset/{uuid}/import", name="import_data_to_dataset", methods={"POST"}, requirements={"uuid"="[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}"})
+     */
+    public function importDataAction(Request $request, $uuid)
+    {
+        $data = $this->checkRoleAndId($request);
+
+        $dataset = $this->em->getRepository(DataSet::class)->findOneBy(['uuid' => $uuid]);
+        if (null === $dataset)
+            throw new HttpException(404, "Dataset not found.");
+        
+        $current = $this->cr->getCurrentUser($this);
+        if ($current !== $dataset->getOwner())
+            throw new HttpException(401, "You are not the owner.");
+
+        $code = 401;
+        $message = "Unauthorized";
+        $extras = NULL;
+
+        if (isset($data['file']) && null !== $data['file']) {
+            $fileExcel = new FileExcel();
+            $file = new UploadedBase64EncodedFile(new Base64EncodedFile($data['file']));
+            $fileExcel->setFile($file);
+            $fileExcel->setLink($file->getClientOriginalName());
+            $fileExcel->setDataset($dataset);
+            $dataset->setFileExcel($fileExcel);
+
+            try {
+                $this->em->persist($fileExcel);
+                $this->em->persist($dataset);
+                $this->em->flush();
+
+                $code = 201;
+                $message = 'Data imported successfully';
+            } catch (HttpException $ex) {
+                $code = $ex->getStatusCode();
+                $message = $ex->getMessage();
+            } catch (\Exception $ex) {
+                $code = 400;
+                $message = $ex->getMessage();
+            }
+        }
+
+        return new JsonResponse([
+            'code' => $code,
+            'message' => $message,
+            'extras' => $extras
+        ], $code);
     }
 }

@@ -4,6 +4,9 @@ oneup_flysystem:
         user_adapter:
             local:
                 directory: "%kernel.root_dir%/../public/uploads"
+        file_excel_adapter:
+            local:
+                directory: "%kernel.root_dir%/../public/uploads/files"
             # awss3v3:
             #     client: Aws\S3\S3Client
             #     bucket: '%env(AWS_S3_BUCKET_NAME)%'
@@ -11,4 +14,8 @@ oneup_flysystem:
         photo_user_fs:
             adapter: user_adapter
             mount: photo_user_fs
+            visibility: public
+        file_excel_fs:
+            adapter: file_excel_adapter
+            mount: file_excel_fs
             visibility: public

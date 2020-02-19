@@ -6,3 +6,8 @@ vich_uploader:
         photo_user:
             uri_prefix: ""
             upload_destination: photo_user_fs
+            namer: Vich\UploaderBundle\Naming\SmartUniqueNamer
+        file_excel:
+            uri_prefix: ""
+            upload_destination: file_excel_fs
+            namer: Vich\UploaderBundle\Naming\SmartUniqueNamer

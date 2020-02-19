@@ -82,6 +82,16 @@ class DataSet
      */
     private $surveyTokens;
 
+    /**
+     * @ORM\OneToOne(targetEntity="App\Entity\FileExcel", cascade={"persist", "remove"})
+     * @ORM\JoinColumn(nullable=true)
+     * @Serializer\Type("App\Entity\FileExcel")
+     * @Serializer\SerializedName("fileExcel")
+     * @Serializer\Groups({"new-dataset"})
+     * @Assert\Valid(groups={"new-file"})
+     */
+    private $fileExcel;
+
     public function __construct()
     {
         $this->parts = new ArrayCollection();
@@ -224,6 +234,18 @@ class DataSet
                 $surveyToken->setDataset(null);
             }
         }
+
+        return $this;
+    }
+
+    public function getFileExcel(): ?FileExcel
+    {
+        return $this->fileExcel;
+    }
+
+    public function setFileExcel(?FileExcel $file): self
+    {
+        $this->fileExcel = $file;
 
         return $this;
     }

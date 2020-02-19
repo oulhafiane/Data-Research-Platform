@@ -5,6 +5,7 @@
 # https://symfony.com/doc/current/best_practices/configuration.html#application-related-configuration
 parameters:
     uploads_base_url: 'https://%env(AWS_S3_BUCKET_NAME)%.s3.%env(AWS_S3_REGION_ID)%.amazonaws.com'
+    uploads_files: '%kernel.project_dir%/public/uploads/files/'
     locale: 'en'
     datasets_location: '%env(DATASETS_LOCATION)%'
     google_id: '%env(GOOGLE_ID)%'

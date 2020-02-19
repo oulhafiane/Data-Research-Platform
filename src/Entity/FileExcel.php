@@ -9,10 +9,10 @@ use Vich\UploaderBundle\Mapping\Annotation as Vich;
 use JMS\Serializer\Annotation as Serializer;
 
 /**
- * @ORM\Entity(repositoryClass="App\Repository\PhotoRepository")
+ * @ORM\Entity(repositoryClass="App\Repository\FileExcelRepository")
  * @Vich\Uploadable
  */
-class Photo
+class FileExcel
 {
 	/**
 	 * @ORM\Id()
@@ -24,15 +24,15 @@ class Photo
 	private $id;
 
 	/**
-	 * @Vich\UploadableField(mapping="photo_user", fileNameProperty="name", size="size")
+	 * @Vich\UploadableField(mapping="file_excel", fileNameProperty="name", size="size")
 	 * @Serializer\Type("string")
-	 * @Serializer\Groups({"new-problematic", "update-problematic"})
+	 * @Serializer\Groups({"new-dataset"})
 	 * @Assert\File(
-	 *	maxSize = "6M",
+	 *	maxSize = "50M",
 	 *	mimeTypes = {
-	 *		"image/png",
-	 *		"image/jpeg",
-	 *		"image/jpg"
+	 *		"text/csv",
+	 *		"application/vnd.ms-excel",
+	 *		"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
 	 *	},
 	 *	groups={"new-photo"}
 	 * )
@@ -51,7 +51,7 @@ class Photo
 
 	/**
 	 * @ORM\Column(type="string", length=255)
-	 * Assert\Url(groups={"new-photo"})
+	 * Assert\Url(groups={"my-dataset"})
 	 */
 	private $link;
 
@@ -61,9 +61,9 @@ class Photo
 	private $uploadAt;
 
 	/**
-	 * @ORM\ManyToOne(targetEntity="App\Entity\Problematic", inversedBy="photos")
+	 * @ORM\ManyToOne(targetEntity="App\Entity\Dataset", inversedBy="fileExcel")
 	 */
-	private $problematic;
+	private $dataset;
 
 	public function getId(): ?int
 	{
@@ -135,14 +135,14 @@ class Photo
 		return $this;
 	}
 
-	public function getProblematic(): ?Problematic
+	public function getDataset(): ?Dataset
 	{
-		return $this->problematic;
+		return $this->dataset;
 	}
 
-	public function setProblematic(?Problematic $problematic): self
+	public function setDataset(?Dataset $dataset): self
 	{
-		$this->problematic = $problematic;
+		$this->dataset = $dataset;
 
 		return $this;
 	}
