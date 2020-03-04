@@ -48,7 +48,7 @@ class Part
     private $dataSet;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\Variable", mappedBy="part")
+     * @ORM\OneToMany(targetEntity="App\Entity\Variable", mappedBy="part", cascade={"remove"})
      * @Serializer\Groups({"new-part", "add-variables", "my-dataset"})
      */
     private $variables;

@@ -72,7 +72,7 @@ class DataSet
     private $owner;
 
     /**
-     * @ORM\OneToMany(targetEntity="App\Entity\Part", mappedBy="dataSet")
+     * @ORM\OneToMany(targetEntity="App\Entity\Part", mappedBy="dataSet", cascade={"remove"})
      * @Serializer\Groups({"my-dataset"})
      */
     private $parts;
@@ -83,11 +83,11 @@ class DataSet
     private $surveyTokens;
 
     /**
-     * @ORM\OneToOne(targetEntity="App\Entity\FileExcel", cascade={"persist", "remove"})
+     * @ORM\OneToOne(targetEntity="App\Entity\FileExcel", cascade={"remove"})
      * @ORM\JoinColumn(nullable=true)
      * @Serializer\Type("App\Entity\FileExcel")
      * @Serializer\SerializedName("fileExcel")
-     * @Serializer\Groups({"new-dataset"})
+     * @Serializer\Groups({"new-dataset", "my-dataset"})
      * @Assert\Valid(groups={"new-file"})
      */
     private $fileExcel;

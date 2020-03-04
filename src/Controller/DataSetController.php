@@ -372,6 +372,38 @@ class DataSetController extends AbstractController
     }
 
     /**
+     * @Route("/api/current/dataset/{uuid}", name="delete_dataset", methods={"DELETE"}, requirements={"uuid"="[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}"})
+     */
+    public function deleteDataset($uuid)
+    {
+        $dataset = $this->em->getRepository(DataSet::class)->findOneBy(['uuid' => $uuid]);
+        if (null === $dataset)
+            throw new HttpException(404, "Dataset not found.");
+        
+        $current = $this->cr->getCurrentUser($this);
+        if ($current !== $dataset->getOwner())
+            throw new HttpException(401, "You are not the owner.");
+
+        try{
+            $fileExcel = $dataset->getFileExcel();
+            if (null !== $fileExcel)
+            {
+                $fileExcel->setDataSet(null);
+                $this->em->persist($fileExcel);
+            }
+            $this->em->remove($dataset);
+            $this->em->flush();
+        } catch (\Exception $ex) {
+            throw new HttpException(400, $ex->getMessage());
+        }
+
+        return new JsonResponse([
+            'code' => 200,
+            'message' => "Dataset deleted successfully.",
+        ], 200);
+    }
+
+    /**
      * @Route("/api/current/dataset/{uuid}/token", name="get_tokens_dataset", methods={"GET"}, requirements={"uuid"="[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}"})
      */
     public function getTokensDataSetAction(Request $request, $uuid)
@@ -586,31 +618,15 @@ class DataSetController extends AbstractController
         return $response;
     }
 
-    /**
-     * @Route("/api/anon/dataset/{uuid}/part/{id}", name="put_variables_dataset", methods={"POST"}, requirements={"id"="\d+", "uuid"="[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}"})
-     */
-    public function putVariablesAction(Request $request, $uuid, $id)
-    {
-        $dataset = $this->em->getRepository(DataSet::class)->findOneBy(['uuid' => $uuid]);
-        if (null === $dataset)
-            throw new HttpException(404, "Dataset not found.");
-        
-        $part = $this->em->getRepository(Part::class)->findOneBy(['id' => $id, 'dataSet' => $dataset->getId()]);
-        if (null === $part)
-            throw new HttpException(404, "Part of dataset not found.");
-
-        $data = json_decode($request->getContent(), true);
-        if (!array_key_exists('row', $data))
-            throw new HttpException(400, "Could not found row field.");
-        if (!array_key_exists('variables', $data) || !is_array($data['variables']))
-            throw new HttpException(400, "Could not found variables array.");
-        
+    private function addVariablesToDataSet($dataset, $part, $variables, $row)
+    {        
         $sqlVariables = "";
         $sqlValues = "";
         $isUpdate = false;
-        if (null !== $data['row'] && !ctype_digit($data['row']))
+        if (null !== $row && !ctype_digit($row))
             $isUpdate = true;
-        foreach($data['variables'] as $variable) {
+        
+        foreach($variables as $variable) {
             if (!is_array($variable) || !array_key_exists('id', $variable) || !array_key_exists('value', $variable))
                 throw new HttpException(400, "Could not found variables array.");
             if (null === $variable['id'] || null === $variable['value'])
@@ -633,11 +649,12 @@ class DataSetController extends AbstractController
             $filesystem->copy($db_name, $db_name.".copy", true);
         $db=new \SQLite3($db_name);
         if ($isUpdate)
-            $sql = "UPDATE data SET ".rtrim($sqlValues, ", ")." WHERE rowid=".$data['row'].";";
+            $sql = "UPDATE data SET ".rtrim($sqlValues, ", ")." WHERE rowid=".$row.";";
         else
             $sql = "INSERT INTO data (".rtrim($sqlVariables, ", ").") VALUES(".rtrim($sqlValues, ", ").");";
 
         $extras = null;
+        $extras['row'] = $row;
         try {
             $db->exec($sql);
             if (!$isUpdate)
@@ -646,6 +663,79 @@ class DataSetController extends AbstractController
         } catch (\Exception $ex) {
             $filesystem->remove($db_name.".copy");
             throw new HttpException(400, "Some of the variables does not exists.");
+        }
+
+        return $extras;
+    }
+
+    /**
+     * @Route("/api/anon/dataset/{uuid}/part/{id}", name="put_variables_dataset", methods={"POST"}, requirements={"id"="\d+", "uuid"="[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}"})
+     */
+    public function putVariablesAction(Request $request, $uuid, $id)
+    {
+        $dataset = $this->em->getRepository(DataSet::class)->findOneBy(['uuid' => $uuid]);
+        if (null === $dataset)
+            throw new HttpException(404, "Dataset not found.");
+        
+        $part = $this->em->getRepository(Part::class)->findOneBy(['id' => $id, 'dataSet' => $dataset->getId()]);
+        if (null === $part)
+            throw new HttpException(404, "Part of dataset not found.");
+
+        $data = json_decode($request->getContent(), true);
+        if (!array_key_exists('row', $data))
+            throw new HttpException(400, "Could not found row field.");
+        if (!array_key_exists('variables', $data) || !is_array($data['variables']))
+            throw new HttpException(400, "Could not found variables array.");
+
+        $extras = $this->addVariablesToDataSet($dataset, $part, $data, $data['row']);
+
+        return new JsonResponse([
+            'code' => 200,
+            'message' => "Answers added successfully.",
+            'extras' => $extras
+        ], 200);
+    }
+
+    /**
+     * @Route("/api/anon/dataset/{uuid}/", name="put_rows_dataset", methods={"POST"}, requirements={"uuid"="[a-f0-9]{8}-[a-f0-9]{4}-4[a-f0-9]{3}-[89aAbB][a-f0-9]{3}-[a-f0-9]{12}"})
+     */
+    public function putRowsAction(Request $request, $uuid)
+    {
+        $dataset = $this->em->getRepository(DataSet::class)->findOneBy(['uuid' => $uuid]);
+        if (null === $dataset)
+            throw new HttpException(404, "Dataset not found.");
+
+        $data_brut = json_decode($request->getContent(), true);
+
+        if (!array_key_exists('data', $data_brut) || !is_array($data_brut['data']))
+            throw new HttpException(400, "Could not found data array.");
+
+        $extras = array();
+        $contents = $data_brut['data'];
+        foreach($contents as $content) {
+            if (!array_key_exists('row', $content))
+                throw new HttpException(400, "Could not found row field.");
+            if (!array_key_exists('data_row', $content) || !is_array($content['data_row']))
+                throw new HttpException(400, "Could not found data_row array.");
+            $row = $content['row'];
+            $data_row = $content['data_row'];
+            $current_row = null;
+            foreach($data_row as $data) {
+                if (!array_key_exists('id_part', $data))
+                    throw new HttpException(400, "Could not found id_part field.");
+                if (!array_key_exists('variables', $data) || !is_array($data['variables']))
+                    throw new HttpException(400, "Could not found variables array.");
+                $part = $this->em->getRepository(Part::class)->findOneBy(['id' => $data['id_part'], 'dataSet' => $dataset->getId()]);
+                if (null === $part)
+                    throw new HttpException(404, "Part of dataset not found.");
+                $variables = $data['variables'];
+                $new_row = false;
+                if ($current_row === null)
+                    $new_row = true;
+                $current_row = $this->addVariablesToDataSet($dataset, $part, $variables, $current_row === null ? $row : $current_row['row']);
+                if ($new_row === true)
+                    $extras[] = $current_row;
+            }
         }
 
         return new JsonResponse([

@@ -118,7 +118,7 @@ class ProblematicController extends AbstractController
     public function notifyFollowers($problematic)
     {
         $current = $this->cr->getCurrentUser($this);
-        $this->pushNotifications($current->getFollowers(), 0, $problematic->getId(), $current->getFirstName()." ".$current->getLastName()." has added a new problematic.");
+        $this->pushNotifications($current->getFollowers(), 0, $problematic->getId(), $current->getFirstName()." ".$current->getLastName()." has added a new idea.");
     }
 
     private function checkRoleAndId(Request $request)
