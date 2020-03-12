@@ -83,7 +83,7 @@ class DataSet
     private $surveyTokens;
 
     /**
-     * @ORM\OneToOne(targetEntity="App\Entity\FileExcel", cascade={"remove"})
+     * @ORM\OneToOne(targetEntity="App\Entity\FileExcel", cascade={"persist"})
      * @ORM\JoinColumn(nullable=true)
      * @Serializer\Type("App\Entity\FileExcel")
      * @Serializer\SerializedName("fileExcel")
