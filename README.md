@@ -22,3 +22,8 @@ For the Frontend check [this link](https://github.com/oulhafiane/Data-Research-P
 ## Run project
 composer install  
 symfony server:start
+
+
+## Video about the project
+
+[![1337-42-Fillit](https://raw.githubusercontent.com/oulhafiane/Data-Research-Platform-Front-end/master/src/assets/img/Screen%20Shot%202022-01-16%20at%203.27.46%20PM.png)](https://www.youtube.com/watch?v=MoI36nmzWmo&feature=youtu.be)
