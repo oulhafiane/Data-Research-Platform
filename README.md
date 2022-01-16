@@ -6,7 +6,6 @@ and also it helps them in their research by giving them necessary tools to colle
  - Consult and edit all your datasets,  
  - Clean the data, 
  - Get the data summary, 
- - Analyze the data, and,
  - Data visualization,  
  - Data Analysis.  
 
