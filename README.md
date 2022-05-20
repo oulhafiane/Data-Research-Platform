@@ -1,3 +1,4 @@
+[![42 Profile Card](https://1337-readme-xi.vercel.app/api/profile?cursus=42cursus&login=zoulhafi)](https://github.com/mohouyizme/1337-readme)
 # Data-Research-Platform
 This is a Prototype for a platform used to bring scientists and their research together like a blog for them to post their idea, and give feedback to others,
 and also it helps them in their research by giving them necessary tools to collect, cleanse, visualize and analyze data:  
